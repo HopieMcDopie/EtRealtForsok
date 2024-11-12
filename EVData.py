@@ -2,6 +2,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+"""
+
+Note: data is in kW
+
+
+"""
+
 plt.rcParams.update({
     #"text.usetex": False,            # Use LaTeX for text rendering
     #"font.family": "serif",         # Use a serif font
@@ -68,8 +75,8 @@ def ReadEVData(share_of_CP = float, no_of_EVs = int):
 
 if __name__ == '__main__':
 
-    share_of_CP = 0.7
+    share_of_CP = 0.4
     no_of_EVs = 25
 
     df = ReadEVData(share_of_CP=share_of_CP, no_of_EVs=no_of_EVs)
-    print(df)
+    

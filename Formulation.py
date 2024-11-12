@@ -16,15 +16,15 @@ df = pd.DataFrame({
     'Random_Float': np.round(np.random.uniform(0, 100, 744), 2)
 })
 df.index = range(744)
-
 SpotPrice = df
+
+
 
 def ReadCSVDemandFile(data_file):
     inputDayAhead = pd.read_csv(data_file, delimiter = ";")
     data = inputDayAhead.to_dict()
     CSV_Info = data['Total_Consumption']
     return CSV_Info
-
 Demand = ReadCSVDemandFile('AustinDemand.csv')
 
 
