@@ -21,7 +21,7 @@ def SpotPrices():
             filename = 'SpotPriceData\DA_' + replace + '.01.24.csv'
 
         single_df = pd.read_csv(filename)
-        single_spot_price_data = single_df['Day-ahead (EUR/MWh)']*11.79*1000
+        single_spot_price_data = single_df['Day-ahead (EUR/MWh)']*11.79/1000  #NOK/kWh
 
         if day == 1: 
             for h in hour:
