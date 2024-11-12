@@ -26,9 +26,6 @@ def GridTariffEnergy():
 
     return energy
 
-test = GridTariffEnergy()
-test_df = pd.DataFrame.from_dict(test, orient='index')
-
 
 # Creating a dictionary for the power-part of the grid tariff
 def GridTariffPower():
@@ -49,3 +46,8 @@ def GridTariffPower():
             '500+': 22032 }
     return power
 
+
+
+if __name__ == '__main__':
+    test = GridTariffEnergy()
+    test_df = pd.DataFrame.from_dict(test, orient='index')

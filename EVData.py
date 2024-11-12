@@ -5,20 +5,19 @@ import matplotlib.pyplot as plt
 """
 
 Note: data is in kW
-
+Data from Kasper, originally from "Analysis of residential EV energy flexibility potential based on real-world charging reports and smart meter data"
 
 """
 
-plt.rcParams.update({
+#plt.rcParams.update({
     #"text.usetex": False,            # Use LaTeX for text rendering
     #"font.family": "serif",         # Use a serif font
     #"font.serif": ["Computer Modern"],  # Use Computer Modern, the default LaTeX font
-    "axes.labelsize": 14,           # Font size for axis labels
-    "font.size": 14,                # General font size
-    "legend.fontsize": 12,           # Font size for legend
-    "xtick.labelsize": 12,           # Font size for x-tick labels
-    "ytick.labelsize": 12,           # Font size for y-tick labels
-})
+    #"axes.labelsize": 14,           # Font size for axis labels
+    #"font.size": 14,                # General font size
+    #"legend.fontsize": 12,           # Font size for legend
+    #"xtick.labelsize": 12,           # Font size for x-tick labels
+    #"ytick.labelsize": 12,           # Font size for y-tick labels})
 
 
 def ReadEVData(share_of_CP = float, no_of_EVs = int):
@@ -64,11 +63,14 @@ def ReadEVData(share_of_CP = float, no_of_EVs = int):
 
     month_df = pd.DataFrame(month)
 
-    plt.figure()
-    plt.plot((month_df['Available'][0:24]+month_df['Charging']), label = 'Available')
-    plt.plot(month_df['Charging'][0:24], label = 'Charging')
-    plt.legend()
-    plt.show()
+    # plt.figure()
+    # plt.plot((month_df['Available'][0:24]+month_df['Charging']), label = 'Available')
+    # plt.plot(month_df['Charging'][0:24], label = 'Charging')
+    # plt.legend()
+    # plt.xlabel('hours')
+    # plt.ylabel('kW')
+    # plt.title(f'Available capacity and charging load of {no_of_EVs} EVs')
+    # plt.show()
 
     return month_df
 

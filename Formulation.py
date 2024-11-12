@@ -3,7 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pyomo.environ as pyo
 from pyomo.opt import SolverFactory
-
+from SpotPrice import SpotPrices
+from ConsumptionData import ReadCSVDemandFile
+from EVData import ReadEVData
+from GridTariff import GridTariffEnergy
 
 
 # Data input
@@ -12,30 +15,22 @@ Her må vi lese inn en måned med forbruksdata og en med prisdata. Disse må ha 
 fomatet pandas dataframe
 '''
 
-df = pd.DataFrame({
-    'Random_Float': np.round(np.random.uniform(0, 100, 744), 2)
-})
-df.index = range(744)
-SpotPrice = df
+SpotPrice = SpotPrices()
+EnergyTariff = GridTariffEnergy()
 
-
-
-def ReadCSVDemandFile(data_file):
-    inputDayAhead = pd.read_csv(data_file, delimiter = ";")
-    data = inputDayAhead.to_dict()
-    CSV_Info = data['Total_Consumption']
-    return CSV_Info
 Demand = ReadCSVDemandFile('AustinDemand.csv')
+EV_consumption = ReadEVData(share_of_CP=0.3, no_of_EVs=25)
+
 
 
 # Define constants
 '''
 Her må vi definerer konstanter som feks batteriparametere etc.
 '''
-constants = {'Battery energy capacity': 10,
+constants = {'Battery energy capacity': 80,
              'Initial State of Charge': 0,
-             'Charge capacity': 2,
-             'Dishcharge capacity': 2,
+             'Charge capacity': 80*0.20,
+             'Dishcharge capacity': 80*0.20,
              'eta': 0.975}
 
 
@@ -45,7 +40,7 @@ Her må objekticfunskjonen sammen med alle constraintsene være definert først,
 '''
 
 def Obj(m):
-    return sum(m.C[t]*m.y[t] for t in m.T)
+    return sum((m.C[t] +m.C_grid[t] )*m.y[t] for t in m.T)
 
 def EnergyBalance(m, t):
     return m.y[t] == m.D[t] + m.e_cha[t] - m.e_dis[t]
@@ -66,7 +61,7 @@ def DischargeCap(m, t):
     return m.e_dis[t] <= m.BatteryDischargeCap
 
 
-def ModelSetUp(SpotPrice, Demand, constants): #Setup the opt. model
+def ModelSetUp(SpotPrice, EnergyTariff, Demand, constants): #Setup the opt. model
     #Instance
     m = pyo.ConcreteModel()
 
@@ -75,6 +70,7 @@ def ModelSetUp(SpotPrice, Demand, constants): #Setup the opt. model
     
     #Paramters
     m.C                  = pyo.Param(m.T, initialize = SpotPrice) #spot price input for the month
+    m.C_grid             = pyo.Param(m.T, initialize = EnergyTariff) #energy part of grid tariff
     m.D                  = pyo.Param(m.T, initialize = Demand) #household demand
     m.SoC0               = pyo.Param(initialize = constants['Initial State of Charge']) #Initial state of charge of the batter
     m.BatteryCap         = pyo.Param(initialize = constants['Battery energy capacity']) #Max battery energy capacity [kWh]
@@ -126,10 +122,27 @@ def Graphical_results(m):
         battery.append(m.b[t].value)
         y.append(m.y[t].value)
 
-    plt.figure()
-    plt.plot(hours, price)
+
+    fig, ax1 = plt.subplots()
+    ax1.plot(hours, battery, label='State of Charge', color='tab:green')
+    ax1.plot(hours, y, label='Power import', color='tab:red')
+    ax1.plot(hours, demand, color ='tab:red',linestyle = '--', label='Demand')
+    ax1.set_xlabel('Hours')
+    ax1.set_xticks(hours)
+    ax1.set_ylabel('Power [kW]')
+    ax1.legend(loc = 'upper left')
+
+    ax2 = ax1.twinx() #Creates a second y-axis on the right
+    ax2.plot(hours, price, label = 'Spotprice', color = 'tab:blue')
+    ax2.set_ylabel('Spot Price [NOK/kWh]')
+    ax2.legend(loc = 'upper right')
+
+    
+    fig.tight_layout()  # Adjust layout to prevent overlapping
+    plt.title('Results from optimization problem')
     plt.show()
 
-m = ModelSetUp(SpotPrice, Demand, constants)
+m = ModelSetUp(SpotPrice, EnergyTariff, Demand, constants)
 Solve(m)
 Graphical_results(m)
+print(pyo.value(m.Obj))

@@ -211,6 +211,12 @@ def ReadAustinFile(data_file): # Read the data from the Austin file
     return daily_client_data
 
 
+def ReadCSVDemandFile(data_file):
+    inputDayAhead = pd.read_csv(data_file, delimiter = ";")
+    data = inputDayAhead.to_dict()
+    CSV_Info = data['Total_Consumption']
+    return CSV_Info
+
     
 if __name__ == '__main__':
     # ________________TEST OF CODE_____________________
@@ -268,14 +274,20 @@ if __name__ == '__main__':
 
 
 
-
-
-
-    #________________ACTUAL DATA PROCESSING_________________
+    # _______DATA PROCESSING FROM LARGE TO SMALLER FILE___________
     """
     Remember to uncomment/comment out line if you want to store updated values!!
     """
-    HouseDemand = ReadAustinFile('15minute_data_austin.csv')
+    #HouseDemand = ReadAustinFile('15minute_data_austin.csv')
+    #df = pd.DataFrame.from_dict(HouseDemand, orient='index', columns=['Total_Consumption'])
 
-    df = pd.DataFrame.from_dict(HouseDemand, orient='index', columns=['Total_Consumption'])
-    print(df)
+    # _________DATA PROCESSING OF SMALL FILE________
+    demand = ReadCSVDemandFile('AustinDemand.csv')
+
+    plt.figure()
+    plt.plot(demand.values())
+    plt.xlabel('hours')
+    plt.ylabel('kW')
+    plt.title('Aggregated demand of 25 households')
+    plt.show()
+    
