@@ -31,17 +31,12 @@ EV_data = ReadEVData(share_of_CP=0.3, no_of_EVs=25)
 '''
 Her må vi definerer konstanter som feks batteriparametere etc.
 '''
-EV_battery_energy_cap = FindMonthlyChargeEnergy(EV_data)
-EV_battery_power_cap = EV_data['Available']
 
 constants = {'Battery energy capacity': 80, #kWh
              'Initial State of Charge': 0, #kWh
              'Charge capacity': 80*0.20, #kW
              'Dishcharge capacity': 80*0.20, #kW
-             'eta': 0.975,
-             'EV battery energy capcaity': EV_battery_energy_cap*0.40, #kWh, ganger med andel som anses som fleksiblet
-             'EV battery power capacity': EV_battery_power_cap
-             }
+             'eta': 0.975}
 
 
 # Mathematical formulation
@@ -50,7 +45,7 @@ Her må objekticfunskjonen sammen med alle constraintsene være definert først,
 '''
 
 def Obj(m):
-    return sum((m.C_spot[t] + m.C_grid[t] )*m.y[t] for t in m.T)
+    return sum((m.C_spot[t] + m.C_grid[t] )*m.y_total[t] for t in m.T)
 
 
 
@@ -61,7 +56,7 @@ def EVEnergyBalance(m, t):
     return m.y_EV[t] == m.D_EV[t] + m.e_EV_cha[t] - m.e_EV_dis[t]
 
 def GridImport(m, t):
-    return m.y[t] == m.y_house[t] + m.y_EV[t]
+    return m.y_total[t] == m.y_house[t] + m.y_EV[t]
 
 
 
@@ -93,12 +88,15 @@ def SoC_EV(m, t):
     
 def SoCCap_EV(m, t):
     return m.b_EV[t] <= m.EV_BatteryEnergyCap
+
+def SoCCap_EV_v2(m):
+    return sum(m.b_EV[t] for t in m.T) <= m.EV_BatteryEnergyCap # eller er det charge???
     
 def ChargeCap_EV(m, t):
     return m.e_EV_cha[t] <= m.EV_BatteryPowerCap[t]
 
 def DischargeCap_EV(m, t):
-    return m.e_EV_dis[t] <= m.EV_BatteryPowerCap[t]
+    return m.e_EV_dis[t] <= m.EV_BatteryPowerCap[t] *100000
 
 
 def ModelSetUp(SpotPrice, EnergyTariff, Demand, EV_data, constants): #Set up the optimisation model
@@ -118,8 +116,8 @@ def ModelSetUp(SpotPrice, EnergyTariff, Demand, EV_data, constants): #Set up the
     m.BatteryChargeCap    = pyo.Param(initialize = constants['Charge capacity']) #Charging speed/battery power capacity [kW]
     m.BatteryDischargeCap = pyo.Param(initialize = constants['Dishcharge capacity']) #Disharging speed/battery power capacity [kW]
     m.eta                 = pyo.Param(initialize = constants['eta']) #efficiency of charge/discharge
-    m.EV_BatteryEnergyCap = pyo.Param(initialize = constants['EV battery energy capcaity'])
-    m.EV_BatteryPowerCap  = pyo.Param(m.t, initialize = constants['EV battery power capacity'])
+    m.EV_BatteryEnergyCap = pyo.Param(initialize = FindMonthlyChargeEnergy(EV_data)*0.4)
+    m.EV_BatteryPowerCap  = pyo.Param(m.T, initialize = EV_data['Available'])
     
 
     #Variables
@@ -141,6 +139,11 @@ def ModelSetUp(SpotPrice, EnergyTariff, Demand, EV_data, constants): #Set up the
     m.SoCCap                = pyo.Constraint(m.T, rule = SoCCap)
     m.ChargeCap             = pyo.Constraint(m.T, rule = ChargeCap) 
     m.DischargeCap          = pyo.Constraint(m.T, rule = DischargeCap)
+    m.SoC_EV                = pyo.Constraint(m.T, rule = SoC_EV)
+    m.SoCCap_EV             = pyo.Constraint(m.T, rule = SoCCap_EV)
+    m.SoCCap_EV_v2          = pyo.Constraint(rule = SoCCap_EV_v2)
+    m.ChargeCap_EV          = pyo.Constraint(m.T, rule = ChargeCap_EV) 
+    m.DischargeCap_EV       = pyo.Constraint(m.T, rule = DischargeCap_EV)
 
     #Objective function
     m.Obj = pyo.Objective(rule = Obj, sense = pyo.minimize)
@@ -157,41 +160,115 @@ Her må vi solve og lagre data, gjerne presentere i gode visuelle grafer
 '''
 
 def Graphical_results(m):
+    hours = []
+
     demand = []
     EV_demand = []
+
     price = []
+
     battery = []
+    e_cha = []
+    e_dis = []
+    EV_battery = []
+    e_EV_cha = []
+    e_EV_dis = []
+
     y = []
-    hours = []
+    y_house = []
+    y_EV = []
+
+    test = []
 
     for t in m.T:
         hours.append(t)
+        price.append(m.C_spot[t])
+
         demand.append(m.D[t])
         EV_demand.append(m.D_EV[t])
-        price.append(m.C_spot[t])
+
         battery.append(m.b[t].value)
+        e_cha.append(m.e_cha[t].value)
+        e_dis.append(m.e_dis[t].value)
+        EV_battery.append(m.b_EV[t].value)
+        e_EV_cha.append(m.e_EV_cha[t].value)
+        e_EV_dis.append(m.e_EV_dis[t].value)
+
         y.append(m.y_total[t].value)
+        y_house.append(m.y_house[t].value)
+        y_EV.append(m.y_EV[t].value)
 
+        test.append(m.D_EV[t] + m.e_EV_cha[t].value)
 
-    fig, ax1 = plt.subplots()
-    ax1.plot(hours, battery, label='State of Charge', color='tab:green')
+    #plotting the demand and imports
+    fig1, ax1 = plt.subplots()
     ax1.plot(hours, y, label='Power import', color='tab:red')
-    ax1.plot(hours, demand, color ='tab:orange', linestyle = '--', label='Demand')
+    ax1.plot(hours, demand, color ='tab:orange', linestyle = '--', label='House Demand')
     ax1.plot(hours, EV_demand, color = 'tab:grey', linestyle = '--', label = 'EV demand')
+    ax1.axhline(y=0, color= 'k', linestyle = '--')
     ax1.set_xlabel('Hours')
     ax1.set_xticks(hours)
     ax1.set_ylabel('Power [kW]')
     ax1.legend(loc = 'upper left')
-
+    ax1.set_xlim(0,47)
     ax2 = ax1.twinx() #Creates a second y-axis on the right
     ax2.plot(hours, price, label = 'Spotprice', color = 'tab:blue')
     ax2.set_ylabel('Spot Price [NOK/kWh]')
     ax2.legend(loc = 'upper right')
-
-    
-    fig.tight_layout()  # Adjust layout to prevent overlapping
+    ax2.set_ylim([0,3])
+    fig1.tight_layout()  # Adjust layout to prevent overlapping
     plt.title('Results from optimization problem')
     plt.show()
+
+
+
+
+    #plotting the house battery
+    fig2, ax1 = plt.subplots()
+    ax1.plot(hours, battery, label='State of Charge', color='tab:green')
+    ax1.plot(hours, y, label='Power import', color='tab:red')
+    ax1.plot(hours, demand, color ='tab:orange', linestyle = '--', label='Demand')
+    ax1.bar(hours, e_cha, color = 'green')
+    ax1.bar(hours, e_dis, color = 'red')
+    ax1.axhline(y=0, color= 'k', linestyle = '--')
+    ax1.set_xlabel('Hours')
+    ax1.set_xticks(hours)
+    ax1.set_ylabel('Power [kW]')
+    ax1.legend(loc = 'upper left')
+    ax1.set_xlim(0,47)
+    ax2 = ax1.twinx() #Creates a second y-axis on the right
+    ax2.plot(hours, price, label = 'Spotprice', color = 'tab:blue')
+    ax2.set_ylabel('Spot Price [NOK/kWh]')
+    ax2.legend(loc = 'upper right')
+    ax2.set_ylim([0,3])
+    fig2.tight_layout()  # Adjust layout to prevent overlapping
+    plt.title('Results from optimization problem')
+    plt.show()
+
+
+    #plotting the EV "battery"
+    fig3, ax1 = plt.subplots()
+    ax1.plot(hours, EV_battery, label='EV "State of Charge"', color='tab:green')
+    ax1.plot(hours, y, label='Power import', color='tab:red')
+    ax1.plot(hours, EV_demand, color ='tab:orange', linestyle = '--', label='EV Demand')
+    ax1.bar(hours, e_EV_cha, color = 'green')
+    ax1.bar(hours, e_EV_dis, color = 'red')
+    ax1.axhline(y=0, color= 'k', linestyle = '--')
+    ax1.set_xlabel('Hours')
+    ax1.set_xticks(hours)
+    ax1.set_ylabel('Power [kW]')
+    ax1.legend(loc = 'upper left')
+    ax1.set_xlim(0,743)
+    ax2 = ax1.twinx() #Creates a second y-axis on the right
+    ax2.plot(hours, price, label = 'Spotprice', color = 'tab:blue')
+    ax2.set_ylabel('Spot Price [NOK/kWh]')
+    ax2.legend(loc = 'upper right')
+    ax2.set_ylim([0,3])
+    fig3.tight_layout()  # Adjust layout to prevent overlapping
+    plt.title('Results from optimization problem')
+    plt.show()
+
+
 
 m = ModelSetUp(SpotPrice, EnergyTariff, Demand, EV_data, constants)
 Solve(m)
