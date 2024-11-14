@@ -74,6 +74,13 @@ def ReadEVData(share_of_CP = float, no_of_EVs = int):
 
     return month_df
 
+def FindMonthlyChargeEnergy(data = pd.DataFrame):
+    monthly_energy_use = 0
+    for i in data['Charging']:
+        monthly_energy_use += i
+    return monthly_energy_use
+
+
 
 if __name__ == '__main__':
 
@@ -81,4 +88,3 @@ if __name__ == '__main__':
     no_of_EVs = 25
 
     df = ReadEVData(share_of_CP=share_of_CP, no_of_EVs=no_of_EVs)
-    

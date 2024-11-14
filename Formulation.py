@@ -5,7 +5,7 @@ import pyomo.environ as pyo
 from pyomo.opt import SolverFactory
 from SpotPrice import SpotPrices
 from ConsumptionData import ReadCSVDemandFile
-from EVData import ReadEVData
+from EVData import ReadEVData, FindMonthlyChargeEnergy
 from GridTariff import GridTariffEnergy
 
 
@@ -19,19 +19,29 @@ SpotPrice = SpotPrices()
 EnergyTariff = GridTariffEnergy()
 
 Demand = ReadCSVDemandFile('AustinDemand.csv')
-EV_consumption = ReadEVData(share_of_CP=0.3, no_of_EVs=25)
+EV_data = ReadEVData(share_of_CP=0.3, no_of_EVs=25)
 
+
+
+"""I effekttariff må man ha en liste med de tre høyeste peakene, dette blir en variabel, den må sjekke alle peakene og kaste ut 
+   den laveste dersom det er mulig, tilslutt må den bestemme seg for hvile sone den er i og få en kostnad knyttet til dette"""
 
 
 # Define constants
 '''
 Her må vi definerer konstanter som feks batteriparametere etc.
 '''
-constants = {'Battery energy capacity': 80,
-             'Initial State of Charge': 0,
-             'Charge capacity': 80*0.20,
-             'Dishcharge capacity': 80*0.20,
-             'eta': 0.975}
+EV_battery_energy_cap = FindMonthlyChargeEnergy(EV_data)
+EV_battery_power_cap = EV_data['Available']
+
+constants = {'Battery energy capacity': 80, #kWh
+             'Initial State of Charge': 0, #kWh
+             'Charge capacity': 80*0.20, #kW
+             'Dishcharge capacity': 80*0.20, #kW
+             'eta': 0.975,
+             'EV battery energy capcaity': EV_battery_energy_cap*0.40, #kWh, ganger med andel som anses som fleksiblet
+             'EV battery power capacity': EV_battery_power_cap
+             }
 
 
 # Mathematical formulation
@@ -40,10 +50,10 @@ Her må objekticfunskjonen sammen med alle constraintsene være definert først,
 '''
 
 def Obj(m):
-    return sum((m.C[t] +m.C_grid[t] )*m.y[t] for t in m.T)
+    return sum((m.C_spot[t] + m.C_grid[t] )*m.y[t] for t in m.T)
 
 def EnergyBalance(m, t):
-    return m.y[t] == m.D[t] + m.e_cha[t] - m.e_dis[t]
+    return m.y[t] == m.D[t] + m.D_EV[t] + m.e_cha[t] - m.e_dis[t]
 
 def SoC(m, t):
     if t == 0:
@@ -61,22 +71,23 @@ def DischargeCap(m, t):
     return m.e_dis[t] <= m.BatteryDischargeCap
 
 
-def ModelSetUp(SpotPrice, EnergyTariff, Demand, constants): #Setup the opt. model
+def ModelSetUp(SpotPrice, EnergyTariff, Demand, EV_data, constants): #Set up the optimisation model
     #Instance
     m = pyo.ConcreteModel()
 
     #Set
-    m.T = pyo.RangeSet(0, 24*31-1) #24 hours/day * 31 days/month
+    m.T = pyo.RangeSet(0, 743) #24 hours/day * 31 days/month = 744 hours
     
     #Paramters
-    m.C                  = pyo.Param(m.T, initialize = SpotPrice) #spot price input for the month
-    m.C_grid             = pyo.Param(m.T, initialize = EnergyTariff) #energy part of grid tariff
-    m.D                  = pyo.Param(m.T, initialize = Demand) #household demand
-    m.SoC0               = pyo.Param(initialize = constants['Initial State of Charge']) #Initial state of charge of the batter
-    m.BatteryCap         = pyo.Param(initialize = constants['Battery energy capacity']) #Max battery energy capacity [kWh]
-    m.BatteryChargeCap   = pyo.Param(initialize = constants['Charge capacity']) #Charging speed/battery power capacity [kW]
+    m.C_spot              = pyo.Param(m.T, initialize = SpotPrice) #spot price input for the month
+    m.C_grid              = pyo.Param(m.T, initialize = EnergyTariff) #energy part of grid tariff
+    m.D                   = pyo.Param(m.T, initialize = Demand) #aggregated household demand
+    m.D_EV                = pyo.Param(m.T, initialize = EV_data['Charging']) #aggregated EV demand
+    m.SoC0                = pyo.Param(initialize = constants['Initial State of Charge']) #Initial state of charge of the batter
+    m.BatteryCap          = pyo.Param(initialize = constants['Battery energy capacity']) #Max battery energy capacity [kWh]
+    m.BatteryChargeCap    = pyo.Param(initialize = constants['Charge capacity']) #Charging speed/battery power capacity [kW]
     m.BatteryDischargeCap = pyo.Param(initialize = constants['Dishcharge capacity']) #Disharging speed/battery power capacity [kW]
-    m.eta                = pyo.Param(initialize = constants['eta']) #efficiency of charge/discharge
+    m.eta                 = pyo.Param(initialize = constants['eta']) #efficiency of charge/discharge
     
 
     #Variables
@@ -106,10 +117,9 @@ def Solve(m):
 Her må vi solve og lagre data, gjerne presentere i gode visuelle grafer
 '''
 
-
-
 def Graphical_results(m):
     demand = []
+    EV_demand = []
     price = []
     battery = []
     y = []
@@ -118,6 +128,7 @@ def Graphical_results(m):
     for t in m.T:
         hours.append(t)
         demand.append(m.D[t])
+        EV_demand.append(m.D_EV[t])
         price.append(m.C[t])
         battery.append(m.b[t].value)
         y.append(m.y[t].value)
@@ -126,7 +137,8 @@ def Graphical_results(m):
     fig, ax1 = plt.subplots()
     ax1.plot(hours, battery, label='State of Charge', color='tab:green')
     ax1.plot(hours, y, label='Power import', color='tab:red')
-    ax1.plot(hours, demand, color ='tab:red',linestyle = '--', label='Demand')
+    ax1.plot(hours, demand, color ='tab:orange', linestyle = '--', label='Demand')
+    ax1.plot(hours, EV_demand, color = 'tab:grey', linestyle = '--', label = 'EV demand')
     ax1.set_xlabel('Hours')
     ax1.set_xticks(hours)
     ax1.set_ylabel('Power [kW]')
@@ -142,7 +154,7 @@ def Graphical_results(m):
     plt.title('Results from optimization problem')
     plt.show()
 
-m = ModelSetUp(SpotPrice, EnergyTariff, Demand, constants)
+m = ModelSetUp(SpotPrice, EnergyTariff, Demand, EV_data, constants)
 Solve(m)
 Graphical_results(m)
 print(pyo.value(m.Obj))
