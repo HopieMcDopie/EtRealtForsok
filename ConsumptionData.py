@@ -276,7 +276,7 @@ if __name__ == '__main__':
 
     # _______DATA PROCESSING FROM LARGE TO SMALLER FILE___________
     """
-    Remember to uncomment/comment out line if you want to store updated values!!
+    Remember to uncomment/comment out line in ReadAustinFile-function if you want to store updated values!!
     """
     #HouseDemand = ReadAustinFile('15minute_data_austin.csv')
     #df = pd.DataFrame.from_dict(HouseDemand, orient='index', columns=['Total_Consumption'])

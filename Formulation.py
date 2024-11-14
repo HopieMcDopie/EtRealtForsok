@@ -6,7 +6,7 @@ from pyomo.opt import SolverFactory
 from SpotPrice import SpotPrices
 from ConsumptionData import ReadCSVDemandFile
 from EVData import ReadEVData, FindMonthlyChargeEnergy
-from GridTariff import GridTariffEnergy
+from GridTariff import GridTariffEnergy, GridTariffPower
 
 
 # Data input
@@ -17,6 +17,7 @@ fomatet pandas dataframe
 
 SpotPrice = SpotPrices()
 EnergyTariff = GridTariffEnergy()
+PowerTariff = GridTariffPower()
 
 Demand = ReadCSVDemandFile('AustinDemand.csv')
 EV_data = ReadEVData(share_of_CP=0.3, no_of_EVs=25)
@@ -45,7 +46,7 @@ Her må objekticfunskjonen sammen med alle constraintsene være definert først,
 '''
 
 def Obj(m):
-    return sum((m.C_spot[t] + m.C_grid[t] )*m.y_total[t] for t in m.T)
+    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_total[t] for t in m.T) #+ m.C_grid_power
 
 
 
@@ -57,6 +58,31 @@ def EVEnergyBalance(m, t):
 
 def GridImport(m, t):
     return m.y_total[t] == m.y_house[t] + m.y_EV[t]
+
+def Peak(m, t):
+    return m.peak >= m.y_total[t]
+
+# def GridTariffPower(m):
+#     if m.peak >= 0 and m.peak < 2:
+#         return m.C_grid_power == PowerTariff['0-2']
+#     elif m.peak >= 2 and m.peak < 5:
+#         return m.C_grid_power == PowerTariff['2-5']
+#     elif m.peak >= 5 and m.peak < 10:
+#         return m.C_grid_power == PowerTariff['5-10']
+#     elif m.peak >= 10 and m.peak < 15:
+#         return m.C_grid_power == PowerTariff['10-15']
+#     elif m.peak >= 15 and m.peak < 20:
+#         return m.C_grid_power == PowerTariff['15-20']
+#     elif m.peak >= 20 and m.peak < 25:
+#         return m.C_grid_power == PowerTariff['20-25']
+#     elif m.peak >= 25 and m.peak < 50:
+#         return m.C_grid_power == PowerTariff['25-50']
+#     elif m.peak >= 50 and m.peak < 75:
+#         return m.C_grid_power == PowerTariff['50-75']
+#     elif m.peak >= 75 and m.peak < 100:
+#         return m.C_grid_power == PowerTariff['75-100']
+#     elif m.peak >= 100:
+#         return m.C_grid_power == PowerTariff['500+']
 
 
 
@@ -99,7 +125,7 @@ def DischargeCap_EV(m, t):
     return m.e_EV_dis[t] <= m.EV_BatteryPowerCap[t] *100000
 
 
-def ModelSetUp(SpotPrice, EnergyTariff, Demand, EV_data, constants): #Set up the optimisation model
+def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants): #Set up the optimisation model
     #Instance
     m = pyo.ConcreteModel()
 
@@ -108,7 +134,7 @@ def ModelSetUp(SpotPrice, EnergyTariff, Demand, EV_data, constants): #Set up the
     
     #Paramters
     m.C_spot              = pyo.Param(m.T, initialize = SpotPrice) #spot price input for the month
-    m.C_grid              = pyo.Param(m.T, initialize = EnergyTariff) #energy part of grid tariff
+    m.C_grid_energy       = pyo.Param(m.T, initialize = EnergyTariff) #energy part of grid tariff
     m.D                   = pyo.Param(m.T, initialize = Demand) #aggregated household demand
     m.D_EV                = pyo.Param(m.T, initialize = EV_data['Charging']) #aggregated EV demand
     m.SoC0                = pyo.Param(initialize = constants['Initial State of Charge']) #Initial state of charge of the batter
@@ -121,20 +147,24 @@ def ModelSetUp(SpotPrice, EnergyTariff, Demand, EV_data, constants): #Set up the
     
 
     #Variables
-    m.y_house   = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid to the house [kWh]
-    m.y_EV      = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid to the EV [kWh]
-    m.y_total   = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid in total [kWh]
-    m.b         = pyo.Var(m.T, within = pyo.NonNegativeReals) # battery SoC [kWh]
-    m.e_cha     = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy charged to the battery [kWh]
-    m.e_dis     = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy disherged from the battery [kWh]
-    m.b_EV      = pyo.Var(m.T, within = pyo.NonNegativeReals) # EV battery SoC [kWh]
-    m.e_EV_cha  = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy charged to the battery [kWh]
-    m.e_EV_dis  = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy disherged from the battery [kWh]
+    m.y_house       = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid to the house [kWh]
+    m.y_EV          = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid to the EV [kWh]
+    m.y_total       = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid in total [kWh]
+    m.b             = pyo.Var(m.T, within = pyo.NonNegativeReals) # battery SoC [kWh]
+    m.e_cha         = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy charged to the battery [kWh]
+    m.e_dis         = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy disherged from the battery [kWh]
+    m.b_EV          = pyo.Var(m.T, within = pyo.NonNegativeReals) # EV battery SoC [kWh]
+    m.e_EV_cha      = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy charged to the battery [kWh]
+    m.e_EV_dis      = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy disherged from the battery [kWh]
+    m.peak          = pyo.Var(within = pyo.NonNegativeReals)
+    #m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals)
 
     #Constraints
     m.HouseEnergyBalance    = pyo.Constraint(m.T, rule = HouseEnergyBalance)
     m.EVEnergyBalance       = pyo.Constraint(m.T, rule = EVEnergyBalance)
     m.GridImport            = pyo.Constraint(m.T, rule = GridImport)
+    m.Peak                  = pyo.Constraint(m.T,rule = Peak)
+    #m.GridTariffPower       =pyo.Constraint(rule =  GridTariffPower)
     m.SoC                   = pyo.Constraint(m.T, rule = SoC)
     m.SoCCap                = pyo.Constraint(m.T, rule = SoCCap)
     m.ChargeCap             = pyo.Constraint(m.T, rule = ChargeCap) 
@@ -270,7 +300,8 @@ def Graphical_results(m):
 
 
 
-m = ModelSetUp(SpotPrice, EnergyTariff, Demand, EV_data, constants)
+m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
 Solve(m)
 Graphical_results(m)
 print(pyo.value(m.Obj))
+print(pyo.value(m.peak))

@@ -30,8 +30,8 @@ def GridTariffEnergy():
 # Creating a dictionary for the power-part of the grid tariff
 def GridTariffPower():
     power = {'0-2': 134, # kr/måned
-            '2-5': 239,
-            '5-10': 408,
+             '2-5': 239,
+             '5-10': 408,
             '10-15': 601,
             '15-20': 794,
             '20-25': 989,
@@ -43,7 +43,7 @@ def GridTariffPower():
             '200-300': 10411,
             '300-400': 14288,
             '400-500': 18158,
-            '500+': 22032 }
+            '500++': 22032 }
     return power
 
 
