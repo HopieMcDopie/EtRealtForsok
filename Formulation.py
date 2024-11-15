@@ -46,7 +46,7 @@ Her må objekticfunskjonen sammen med alle constraintsene være definert først,
 '''
 
 def Obj(m):
-    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_total[t] for t in m.T) # + m.C_grid_power
+    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_total[t] for t in m.T)  + m.C_grid_power
 
 
 
@@ -62,6 +62,18 @@ def GridImport(m, t):
 def Peak(m, t):
     return m.peak >= m.y_total[t]
 
+# def SignleSegment(m):
+#     return sum(m.z[i] for i in range(m.num_segments)) == 1
+
+# def Segment(m, i):
+#     lower, upper = m.breakpoints[i]
+#     if upper == float('inf'):
+#         return m.peak >= lower * m.z[i]
+#     else:
+#         return pyo.inequality(lower * m.z[i], m.peak, upper* m.z[i])
+    
+# def TariffCosts(m):
+#     return m.C_grid_power == sum(m.costs[i]*m.z[i] for i in range(m.num_segments))
 
 
 def SoC(m, t):
@@ -79,10 +91,7 @@ def ChargeCap(m, t):
 def DischargeCap(m, t):
     return m.e_dis[t] <= m.BatteryDischargeCap
 
-"""
-MÅ LAGE EN B FOR ELBILBATTERIET!! OG FINNE EN INITIAL?
-     
-"""
+
 
 def SoC_EV(m, t):
     if t == 0:
@@ -120,6 +129,20 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
     m.EV_BatteryEnergyCap = pyo.Param(initialize = FindMonthlyChargeEnergy(EV_data))
     m.EV_BatteryPowerCap  = pyo.Param(m.T, initialize = EV_data['Available'])
 
+    m.breakpoints = []
+    m.costs = []
+    for key, value in PowerTariff.items():
+        if '++' in key:
+            lower = int(key.split('++')[0])
+            upper = float('inf')
+        else: 
+            lower, upper = map(int, key.split('-'))
+        # m.breakpoints.append((lower, upper))
+        m.breakpoints.append(lower)
+        m.costs.append(value)
+
+    # m.num_segments = len(m.costs)
+
     #Variables
     m.y_house       = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid to the house [kWh]
     m.y_EV          = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid to the EV [kWh]
@@ -130,7 +153,12 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
     m.b_EV          = pyo.Var(m.T, within = pyo.NonNegativeReals) # EV battery SoC [kWh]
     m.e_EV_cha      = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy charged to the battery [kWh]
     m.e_EV_dis      = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy disherged from the battery [kWh]
-    m.peak          = pyo.Var(within = pyo.NonNegativeReals)
+    
+    m.peak = pyo.Var(bounds = (m.breakpoints[0], m.breakpoints[-1]))
+    #m.peak          = pyo.Var(within = pyo.NonNegativeReals)
+    m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals)
+    m.piecewice = pyo.Piecewise(m.C_grid_power, m.peak, pw_pts = m.breakpoints, f_rule = m.costs, pw_repn = 'SOS2', pw_constr_type = 'EQ')
+    # m.z             = pyo.Var(range(m.num_segments), within = pyo.Binary)
 
     #Constraints
     m.HouseEnergyBalance    = pyo.Constraint(m.T, rule = HouseEnergyBalance)
@@ -145,6 +173,11 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
     m.SoCCap_EV             = pyo.Constraint(rule = SoCCap_EV)
     m.ChargeCap_EV          = pyo.Constraint(m.T, rule = ChargeCap_EV) 
     m.DischargeCap_EV       = pyo.Constraint(m.T, rule = DischargeCap_EV)
+
+    # m.SingleSegment = pyo.Constraint(rule = SignleSegment)
+    # m.Segment = pyo.Constraint(range(m.num_segments), rule = Segment)
+    # m.TariffCosts = pyo.Constraint(rule = TariffCosts)
+    
 
     #Objective function
     m.Obj = pyo.Objective(rule = Obj, sense = pyo.minimize)
@@ -273,6 +306,7 @@ def Graphical_results(m):
 
 m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
 Solve(m)
-Graphical_results(m)
+#Graphical_results(m)
 print(pyo.value(m.Obj))
 print(pyo.value(m.peak))
+print(pyo.value(m.C_grid_power))
