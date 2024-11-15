@@ -33,7 +33,7 @@ EV_data = ReadEVData(share_of_CP=0.3, no_of_EVs=25)
 Her må vi definerer konstanter som feks batteriparametere etc.
 '''
 
-constants = {'Battery energy capacity': 80, #kWh
+constants = {'Battery energy capacity': 80*0, #kWh
              'Initial State of Charge': 0, #kWh
              'Charge capacity': 80*0.20, #kW
              'Dishcharge capacity': 80*0.20, #kW
@@ -46,7 +46,7 @@ Her må objekticfunskjonen sammen med alle constraintsene være definert først,
 '''
 
 def Obj(m):
-    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_total[t] for t in m.T) #+ m.C_grid_power
+    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_total[t] for t in m.T) # + m.C_grid_power
 
 
 
@@ -61,28 +61,6 @@ def GridImport(m, t):
 
 def Peak(m, t):
     return m.peak >= m.y_total[t]
-
-# def GridTariffPower(m):
-#     if m.peak >= 0 and m.peak < 2:
-#         return m.C_grid_power == PowerTariff['0-2']
-#     elif m.peak >= 2 and m.peak < 5:
-#         return m.C_grid_power == PowerTariff['2-5']
-#     elif m.peak >= 5 and m.peak < 10:
-#         return m.C_grid_power == PowerTariff['5-10']
-#     elif m.peak >= 10 and m.peak < 15:
-#         return m.C_grid_power == PowerTariff['10-15']
-#     elif m.peak >= 15 and m.peak < 20:
-#         return m.C_grid_power == PowerTariff['15-20']
-#     elif m.peak >= 20 and m.peak < 25:
-#         return m.C_grid_power == PowerTariff['20-25']
-#     elif m.peak >= 25 and m.peak < 50:
-#         return m.C_grid_power == PowerTariff['25-50']
-#     elif m.peak >= 50 and m.peak < 75:
-#         return m.C_grid_power == PowerTariff['50-75']
-#     elif m.peak >= 75 and m.peak < 100:
-#         return m.C_grid_power == PowerTariff['75-100']
-#     elif m.peak >= 100:
-#         return m.C_grid_power == PowerTariff['500+']
 
 
 
@@ -112,17 +90,14 @@ def SoC_EV(m, t):
     else:
         return m.b_EV[t] == m.e_EV_cha[t]*m.eta - m.e_EV_dis[t]/m.eta + m.b_EV[t-1]
     
-def SoCCap_EV(m, t):
-    return m.b_EV[t] <= m.EV_BatteryEnergyCap
-
-def SoCCap_EV_v2(m):
-    return sum(m.b_EV[t] for t in m.T) <= m.EV_BatteryEnergyCap # eller er det charge???
+def SoCCap_EV(m):
+    return sum(m.b_EV[t] for t in m.T) <= m.EV_BatteryEnergyCap*0.2 #here the amount of flexible load can be adjusted
     
 def ChargeCap_EV(m, t):
-    return m.e_EV_cha[t] <= m.EV_BatteryPowerCap[t]
+    return m.e_EV_cha[t] <= m.EV_BatteryPowerCap[t] 
 
 def DischargeCap_EV(m, t):
-    return m.e_EV_dis[t] <= m.EV_BatteryPowerCap[t] *100000
+    return m.e_EV_dis[t] <= m.EV_BatteryPowerCap[t] # have tested and it does not seem to be a limiting factor
 
 
 def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants): #Set up the optimisation model
@@ -142,9 +117,8 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
     m.BatteryChargeCap    = pyo.Param(initialize = constants['Charge capacity']) #Charging speed/battery power capacity [kW]
     m.BatteryDischargeCap = pyo.Param(initialize = constants['Dishcharge capacity']) #Disharging speed/battery power capacity [kW]
     m.eta                 = pyo.Param(initialize = constants['eta']) #efficiency of charge/discharge
-    m.EV_BatteryEnergyCap = pyo.Param(initialize = FindMonthlyChargeEnergy(EV_data)*0.4)
+    m.EV_BatteryEnergyCap = pyo.Param(initialize = FindMonthlyChargeEnergy(EV_data))
     m.EV_BatteryPowerCap  = pyo.Param(m.T, initialize = EV_data['Available'])
-    
 
     #Variables
     m.y_house       = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid to the house [kWh]
@@ -157,21 +131,18 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
     m.e_EV_cha      = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy charged to the battery [kWh]
     m.e_EV_dis      = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy disherged from the battery [kWh]
     m.peak          = pyo.Var(within = pyo.NonNegativeReals)
-    #m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals)
 
     #Constraints
     m.HouseEnergyBalance    = pyo.Constraint(m.T, rule = HouseEnergyBalance)
     m.EVEnergyBalance       = pyo.Constraint(m.T, rule = EVEnergyBalance)
     m.GridImport            = pyo.Constraint(m.T, rule = GridImport)
     m.Peak                  = pyo.Constraint(m.T,rule = Peak)
-    #m.GridTariffPower       =pyo.Constraint(rule =  GridTariffPower)
     m.SoC                   = pyo.Constraint(m.T, rule = SoC)
     m.SoCCap                = pyo.Constraint(m.T, rule = SoCCap)
     m.ChargeCap             = pyo.Constraint(m.T, rule = ChargeCap) 
     m.DischargeCap          = pyo.Constraint(m.T, rule = DischargeCap)
     m.SoC_EV                = pyo.Constraint(m.T, rule = SoC_EV)
-    m.SoCCap_EV             = pyo.Constraint(m.T, rule = SoCCap_EV)
-    m.SoCCap_EV_v2          = pyo.Constraint(rule = SoCCap_EV_v2)
+    m.SoCCap_EV             = pyo.Constraint(rule = SoCCap_EV)
     m.ChargeCap_EV          = pyo.Constraint(m.T, rule = ChargeCap_EV) 
     m.DischargeCap_EV       = pyo.Constraint(m.T, rule = DischargeCap_EV)
 
