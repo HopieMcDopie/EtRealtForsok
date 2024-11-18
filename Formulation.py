@@ -9,123 +9,160 @@ from EVData import ReadEVData, FindMonthlyChargeEnergy
 from GridTariff import GridTariffEnergy, GridTariffPower
 
 
-# Data input
+# _____________________________________________DATA INPUT_____________________________________________
 '''
-Her må vi lese inn en måned med forbruksdata og en med prisdata. Disse må ha time-oppløsning og være i
-fomatet pandas dataframe
+Her må vi lese inn en måned med forbruksdata og prisdata. 
+Disse må ha time-oppløsning og være i fomatet pandas dataframe. 
+De burde også operere med samme enhet, NOK og kWh.
 '''
 
-SpotPrice = SpotPrices()
-EnergyTariff = GridTariffEnergy()
-PowerTariff = GridTariffPower()
+SpotPrice = SpotPrices() # Gives the spot prices for NO3 for january 2024, hourly resolution
+EnergyTariff = GridTariffEnergy() # Gives the energy part of the grid tariff for NO3, hourly resolution
+PowerTariff = GridTariffPower() # Gives the power part of the grid tariff for NO3
 
-Demand = ReadCSVDemandFile('AustinDemand.csv')
-EV_data = ReadEVData(share_of_CP=0.3, no_of_EVs=25)
-
-
-
-"""I effekttariff må man ha en liste med de tre høyeste peakene, dette blir en variabel, den må sjekke alle peakene og kaste ut 
-   den laveste dersom det er mulig, tilslutt må den bestemme seg for hvile sone den er i og få en kostnad knyttet til dette"""
+Demand = ReadCSVDemandFile('AustinDemand.csv') # Gives the demand for 25 households for a month, hourly resolution
+EV_data = ReadEVData(share_of_CP=0.3, no_of_EVs=25) # Gives the available power in the area and the demand for a 
+                                                    # given number of EVs for a month, hourly resolution, note that share_of_CP 
+                                                    # is the share of private charging points
 
 
-# Define constants
+
+
+
+# _____________________________________________DEFINE CONSTANTS_____________________________________________
 '''
 Her må vi definerer konstanter som feks batteriparametere etc.
 '''
 
-constants = {'Battery energy capacity': 80, #kWh
+# These constants are linked to the shared community battery
+batt_const = {'Battery energy capacity': 80, #kWh
              'Initial State of Charge': 0, #kWh
              'Charge capacity': 80*0.20, #kW
              'Dishcharge capacity': 80*0.20, #kW
              'eta': 0.975}
 
+flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh
+                            'Flexible': 0.2} # %
 
-# Mathematical formulation
+
+
+# _____________________________________________MATHEMATICAL FORMULATION_____________________________________________
 '''
 Her må objekticfunskjonen sammen med alle constraintsene være definert først, så må modellen settes opp
 '''
-
+# Objective function
 def Obj(m):
-    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_total[t] for t in m.T)  + m.C_grid_power
+    #The objective function of the optimization problem, is the sum of the costs of the consumed energy, 
+    # in addtion to the cost related to the power consumption decided by the grid tariff
+    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_imp[t] for t in m.T)  + m.C_grid_power
 
 
-
+#Energy balance constraints
 def HouseEnergyBalance(m, t):
+    #Ensures that the imported energy to th houses equals the demand and the potential charging or 
+    # discharging of the comuunity battery
     return m.y_house[t] == m.D[t] + m.e_cha[t] - m.e_dis[t] 
 
 def EVEnergyBalance(m, t):
+    #The modelling of the flexible EV charging is done through a conseptual battery, the charging of
+    # this implies charging moved forwards in time, and teh discharging is demand that already has been
+    # met by earlier charging
     return m.y_EV[t] == m.D_EV[t] + m.e_EV_cha[t] - m.e_EV_dis[t]
 
 def GridImport(m, t):
-    return m.y_total[t] == m.y_house[t] + m.y_EV[t]
+    #Ensures that the total imported energy is the sum of what is going to the houses and to the EVs
+    return m.y_imp[t] == m.y_house[t] + m.y_EV[t]
 
+
+#Monthly peak grid tariff constraints
 def Peak(m, t):
-    return m.peak >= m.y_total[t]
+    #Finds the monthly peak consumption of power as the highest value of the grid import
+    return m.peak >= m.y_imp[t]
 
 def SignleSegment(m):
+    #Ensures that only one of the price-brackets of the prower grid tariff is activated 
     return sum(m.z[i] for i in m.I) == 1
 
-def Segment(m, i):
+def Segment(m):
+    #Ensures that the measured peak power activates the respective power tariff price-bracket
     return m.peak <= sum(m.z[i] * m.breakpoints[i] for i in m.I)
     
 def TariffCosts(m):
+    #Relates the active power grid tariff price-breacket to the cost
     return m.C_grid_power == sum(m.costs[i]*m.z[i] for i in m.I)
 
 
+# Community battery constraints
 def SoC(m, t):
+    #Ensures that the battery's State of Charge is dependent on the amount charged, 
+    # minus the amount discharged and the SoC of the previous hour.
+    # Note that the efficiencies of charging and discharging are included, in addition
+    # to an initial SoC for hour 0.
     if t == 0:
         return m.b[0] == m.e_cha[0]*m.eta - m.e_dis[0]/m.eta + m.SoC0
     else:
         return m.b[t] == m.e_cha[t]*m.eta - m.e_dis[t]/m.eta + m.b[t-1]
     
 def SoCCap(m, t):
+    #Ensures that the battery stays within its energy limitations
     return m.b[t] <= m.BatteryCap
     
 def ChargeCap(m, t):
+    #Ensures that the battery stays within its power limitations
     return m.e_cha[t] <= m.BatteryChargeCap
 
 def DischargeCap(m, t):
+    #Ensures that the battery stays within its power limitations
     return m.e_dis[t] <= m.BatteryDischargeCap
 
 
-
+# Modelling of the flexible EV charging
 def SoC_EV(m, t):
+    #Models how much flexibility has been activated and when it is moved from
     if t == 0:
         return m.b_EV[0] == m.e_EV_cha[0]*m.eta - m.e_EV_dis[0]/m.eta 
     else:
         return m.b_EV[t] == m.e_EV_cha[t]*m.eta - m.e_EV_dis[t]/m.eta + m.b_EV[t-1]
     
 def SoCCap_EV(m):
-    return sum(m.b_EV[t] for t in m.T) <= m.EV_BatteryEnergyCap*0.2 #here the amount of flexible load can be adjusted
+    # The total amount of potential flexible EV charging
+    return sum(m.b_EV[t] for t in m.T) <= m.EV_BatteryEnergyCap
     
 def ChargeCap_EV(m, t):
+    # The amount of EV charingg that can be moved is limited by the amount of 
+    # available capacity in the grid at the hour
     return m.e_EV_cha[t] <= m.EV_BatteryPowerCap[t] 
 
 def DischargeCap_EV(m, t):
-    return m.e_EV_dis[t] <= m.EV_BatteryPowerCap[t] # have tested and it does not seem to be a limiting factor
+    #Discharge does not seem to be a limiting factor, as this is in reality 
+    # chargign that is not occuring in that hours because of charging in an 
+    # earlier hour...  
+    return m.e_EV_dis[t] <= m.EV_BatteryPowerCap[t] 
 
 
-def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants): #Set up the optimisation model
+# The set up of the optimization problem
+def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const): 
     #Instance
     m = pyo.ConcreteModel()
 
     #Set
-    m.T = pyo.RangeSet(0, 743) #24 hours/day * 31 days/month = 744 hours
-    m.I = pyo.RangeSet(0, len(PowerTariff) - 1)
+    m.T = pyo.RangeSet(0, len(Demand)-1)      # 24 hours/day * 31 days/month = 744 hours
+    m.I = pyo.RangeSet(0, len(PowerTariff)-1) # 15 different price-brackets
     
     #Paramters
-    m.C_spot              = pyo.Param(m.T, initialize = SpotPrice) #spot price input for the month
-    m.C_grid_energy       = pyo.Param(m.T, initialize = EnergyTariff) #energy part of grid tariff
-    m.D                   = pyo.Param(m.T, initialize = Demand) #aggregated household demand
-    m.D_EV                = pyo.Param(m.T, initialize = EV_data['Charging']) #aggregated EV demand
-    m.SoC0                = pyo.Param(initialize = constants['Initial State of Charge']) #Initial state of charge of the batter
-    m.BatteryCap          = pyo.Param(initialize = constants['Battery energy capacity']) #Max battery energy capacity [kWh]
-    m.BatteryChargeCap    = pyo.Param(initialize = constants['Charge capacity']) #Charging speed/battery power capacity [kW]
-    m.BatteryDischargeCap = pyo.Param(initialize = constants['Dishcharge capacity']) #Disharging speed/battery power capacity [kW]
-    m.eta                 = pyo.Param(initialize = constants['eta']) #efficiency of charge/discharge
-    m.EV_BatteryEnergyCap = pyo.Param(initialize = FindMonthlyChargeEnergy(EV_data))
-    m.EV_BatteryPowerCap  = pyo.Param(m.T, initialize = EV_data['Available'])
+    m.C_spot              = pyo.Param(m.T, initialize = SpotPrice)                                      # spot price input for the month
+    m.C_grid_energy       = pyo.Param(m.T, initialize = EnergyTariff)                                   # energy part of grid tariff
+    m.D                   = pyo.Param(m.T, initialize = Demand)                                         # aggregated household demand
+    m.D_EV                = pyo.Param(m.T, initialize = EV_data['Charging'])                            # aggregated EV demand
+    m.SoC0                = pyo.Param(initialize = batt_const['Initial State of Charge'])               # initial state of charge of the batter
+    m.BatteryCap          = pyo.Param(initialize = batt_const['Battery energy capacity'])               # max battery energy capacity [kWh]
+    m.BatteryChargeCap    = pyo.Param(initialize = batt_const['Charge capacity'])                       # charging speed/battery power capacity [kW]
+    m.BatteryDischargeCap = pyo.Param(initialize = batt_const['Dishcharge capacity'])                   # disharging speed/battery power capacity [kW]
+    m.eta                 = pyo.Param(initialize = batt_const['eta'])                                   # efficiency of charge/discharge
+    m.EV_BatteryEnergyCap = pyo.Param(initialize = flex_const['Monthly energy']*flex_const['Flexible']) # amount of flexible EV load
+    m.EV_BatteryPowerCap  = pyo.Param(m.T, initialize = EV_data['Available'])                           # available capacity in the grid
 
+    #Creating the list of the grid tariff break-points and respective costs
     m.breakpoints = []
     m.costs = []
     for key, value in PowerTariff.items():
@@ -140,18 +177,16 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
     #Variables
     m.y_house       = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid to the house [kWh]
     m.y_EV          = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid to the EV [kWh]
-    m.y_total       = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid in total [kWh]
+    m.y_imp         = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid in total [kWh]
     m.b             = pyo.Var(m.T, within = pyo.NonNegativeReals) # battery SoC [kWh]
-    m.e_cha         = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy charged to the battery [kWh]
-    m.e_dis         = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy disherged from the battery [kWh]
+    m.e_cha         = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy charged to the battery [kW]
+    m.e_dis         = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy disherged from the battery [kW]
     m.b_EV          = pyo.Var(m.T, within = pyo.NonNegativeReals) # EV battery SoC [kWh]
-    m.e_EV_cha      = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy charged to the battery [kWh]
-    m.e_EV_dis      = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy disherged from the battery [kWh]
-    
-    
-    m.peak          = pyo.Var(within = pyo.NonNegativeReals) 
-    m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals) 
-    m.z             = pyo.Var(m.I, within = pyo.Binary) 
+    m.e_EV_cha      = pyo.Var(m.T, within = pyo.NonNegativeReals) # flexibility activated [kW]
+    m.e_EV_dis      = pyo.Var(m.T, within = pyo.NonNegativeReals) # result of activated flexibility [kW]
+    m.peak          = pyo.Var(within = pyo.NonNegativeReals)      # peak power consumed during th month [kW]
+    m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals)      # cost of power consumption [NOK]
+    m.z             = pyo.Var(m.I, within = pyo.Binary)           # binary variable that selects price-backet of power grid tariff
 
     #Constraints
     m.HouseEnergyBalance    = pyo.Constraint(m.T, rule = HouseEnergyBalance)
@@ -166,10 +201,9 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
     m.SoCCap_EV             = pyo.Constraint(rule = SoCCap_EV)
     m.ChargeCap_EV          = pyo.Constraint(m.T, rule = ChargeCap_EV) 
     m.DischargeCap_EV       = pyo.Constraint(m.T, rule = DischargeCap_EV)
-
-    m.SingleSegment = pyo.Constraint(rule = SignleSegment)
-    m.Segment = pyo.Constraint(m.I, rule = Segment) 
-    m.TariffCosts = pyo.Constraint(rule = TariffCosts) 
+    m.SingleSegment         = pyo.Constraint(rule = SignleSegment)
+    m.Segment               = pyo.Constraint(rule = Segment) 
+    m.TariffCosts           = pyo.Constraint(rule = TariffCosts) 
     
 
     #Objective function
@@ -177,55 +211,44 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
 
     return m
 
-def Solve(m):
-    opt = SolverFactory('gurobi')
-    return opt.solve(m, load_solutions = True)
 
 # Solving and presenting the data
 '''
 Her må vi solve og lagre data, gjerne presentere i gode visuelle grafer
 '''
+def Solve(m):
+    opt = SolverFactory('gurobi')
+    return opt.solve(m, load_solutions = True)
 
 def Graphical_results(m):
     hours = []
-
     demand = []
     EV_demand = []
-
     price = []
-
     battery = []
     e_cha = []
     e_dis = []
     EV_battery = []
     e_EV_cha = []
     e_EV_dis = []
-
     y = []
     y_house = []
     y_EV = []
 
-    test = []
-
     for t in m.T:
         hours.append(t)
         price.append(m.C_spot[t])
-
         demand.append(m.D[t])
         EV_demand.append(m.D_EV[t])
-
         battery.append(m.b[t].value)
         e_cha.append(m.e_cha[t].value)
         e_dis.append(m.e_dis[t].value)
         EV_battery.append(m.b_EV[t].value)
         e_EV_cha.append(m.e_EV_cha[t].value)
         e_EV_dis.append(m.e_EV_dis[t].value)
-
-        y.append(m.y_total[t].value)
+        y.append(m.y_imp[t].value)
         y_house.append(m.y_house[t].value)
         y_EV.append(m.y_EV[t].value)
-
-        test.append(m.D_EV[t] + m.e_EV_cha[t].value)
 
     #plotting the demand and imports
     fig1, ax1 = plt.subplots()
@@ -297,9 +320,9 @@ def Graphical_results(m):
 
 
 
-m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
+m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
 Solve(m)
-Graphical_results(m)
-print(pyo.value(m.Obj))
-print(pyo.value(m.peak))
-print(pyo.value(m.C_grid_power))
+# Graphical_results(m)
+print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
+print(f'Peak power imported during the month: {pyo.value(m.peak):.2f} kW')
+print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
