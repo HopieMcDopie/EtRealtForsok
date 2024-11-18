@@ -33,7 +33,7 @@ EV_data = ReadEVData(share_of_CP=0.3, no_of_EVs=25)
 Her må vi definerer konstanter som feks batteriparametere etc.
 '''
 
-constants = {'Battery energy capacity': 80*0, #kWh
+constants = {'Battery energy capacity': 80, #kWh
              'Initial State of Charge': 0, #kWh
              'Charge capacity': 80*0.20, #kW
              'Dishcharge capacity': 80*0.20, #kW
@@ -62,18 +62,14 @@ def GridImport(m, t):
 def Peak(m, t):
     return m.peak >= m.y_total[t]
 
-# def SignleSegment(m):
-#     return sum(m.z[i] for i in range(m.num_segments)) == 1
+def SignleSegment(m):
+    return sum(m.z[i] for i in m.I) == 1
 
-# def Segment(m, i):
-#     lower, upper = m.breakpoints[i]
-#     if upper == float('inf'):
-#         return m.peak >= lower * m.z[i]
-#     else:
-#         return pyo.inequality(lower * m.z[i], m.peak, upper* m.z[i])
+def Segment(m, i):
+    return m.peak <= sum(m.z[i] * m.breakpoints[i] for i in m.I)
     
-# def TariffCosts(m):
-#     return m.C_grid_power == sum(m.costs[i]*m.z[i] for i in range(m.num_segments))
+def TariffCosts(m):
+    return m.C_grid_power == sum(m.costs[i]*m.z[i] for i in m.I)
 
 
 def SoC(m, t):
@@ -115,6 +111,7 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
 
     #Set
     m.T = pyo.RangeSet(0, 743) #24 hours/day * 31 days/month = 744 hours
+    m.I = pyo.RangeSet(0, len(PowerTariff) - 1)
     
     #Paramters
     m.C_spot              = pyo.Param(m.T, initialize = SpotPrice) #spot price input for the month
@@ -134,14 +131,11 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
     for key, value in PowerTariff.items():
         if '++' in key:
             lower = int(key.split('++')[0])
-            upper = float('inf')
+            upper = 10000
         else: 
             lower, upper = map(int, key.split('-'))
-        # m.breakpoints.append((lower, upper))
-        m.breakpoints.append(lower)
+        m.breakpoints.append(upper) 
         m.costs.append(value)
-
-    # m.num_segments = len(m.costs)
 
     #Variables
     m.y_house       = pyo.Var(m.T, within = pyo.NonNegativeReals) # imported energy from the grid to the house [kWh]
@@ -154,11 +148,10 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
     m.e_EV_cha      = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy charged to the battery [kWh]
     m.e_EV_dis      = pyo.Var(m.T, within = pyo.NonNegativeReals) # energy disherged from the battery [kWh]
     
-    m.peak = pyo.Var(bounds = (m.breakpoints[0], m.breakpoints[-1]))
-    #m.peak          = pyo.Var(within = pyo.NonNegativeReals)
-    m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals)
-    m.piecewice = pyo.Piecewise(m.C_grid_power, m.peak, pw_pts = m.breakpoints, f_rule = m.costs, pw_repn = 'SOS2', pw_constr_type = 'EQ')
-    # m.z             = pyo.Var(range(m.num_segments), within = pyo.Binary)
+    
+    m.peak          = pyo.Var(within = pyo.NonNegativeReals) 
+    m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals) 
+    m.z             = pyo.Var(m.I, within = pyo.Binary) 
 
     #Constraints
     m.HouseEnergyBalance    = pyo.Constraint(m.T, rule = HouseEnergyBalance)
@@ -174,9 +167,9 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
     m.ChargeCap_EV          = pyo.Constraint(m.T, rule = ChargeCap_EV) 
     m.DischargeCap_EV       = pyo.Constraint(m.T, rule = DischargeCap_EV)
 
-    # m.SingleSegment = pyo.Constraint(rule = SignleSegment)
-    # m.Segment = pyo.Constraint(range(m.num_segments), rule = Segment)
-    # m.TariffCosts = pyo.Constraint(rule = TariffCosts)
+    m.SingleSegment = pyo.Constraint(rule = SignleSegment)
+    m.Segment = pyo.Constraint(m.I, rule = Segment) 
+    m.TariffCosts = pyo.Constraint(rule = TariffCosts) 
     
 
     #Objective function
@@ -306,7 +299,7 @@ def Graphical_results(m):
 
 m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, constants)
 Solve(m)
-#Graphical_results(m)
+Graphical_results(m)
 print(pyo.value(m.Obj))
 print(pyo.value(m.peak))
 print(pyo.value(m.C_grid_power))
