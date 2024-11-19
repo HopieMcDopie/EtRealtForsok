@@ -3,30 +3,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
-"""
-FILE STRUCTURE
+#__________________________________#
+##### DATA PROCESSING FUNCTION #####
+#¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨#
 
-- first there is a section of data processing functions needed to use the data
+def check_nan(temp_df): # create a function to check for NaN values in df columns: grid, solar, solar2
 
-- then there is a section of plotting functions to confirm that the processing functions are successfull
-
--lastly a special function to prepare the consumption data for the optimization problem is created
-
-Note: data is in kW and is scaled up by 25 to match norwegian consumption ...
-
-"""
-
-
-# DATA PROCESSING FUNCTION
-
-def check_nan(temp_df):
-    # create a function to check for NaN values in df columns: grid, solar, solar2
-
-    # check whether there is any nan values in grid column
+    #checking nan values in grid column
     check_nan = temp_df['grid'].isna().any()
     #print(check_nan)
-    # fill the nan values in grid column using ffill method
+
+    #fill the nan values in grid column using ffill method
     temp_df['grid'] = temp_df['grid'].ffill()
+    
     # check again to make sure the above method worked
     check_nan = temp_df['grid'].isna().any()
     #print(check_nan)
@@ -50,8 +39,7 @@ def check_nan(temp_df):
     #print(check_nan)   
     return temp_df
 
-def check_timestamp(temp_df):
-    # check for missing timestamp by sorting the dataframe in ascending order with column localminute using sort_values function
+def check_timestamp(temp_df):# check for missing timestamp by sorting the dataframe in ascending order with column localminute using sort_values function
     temp_df= temp_df.sort_values(by='localminute', ascending=True)
     temp_df=temp_df.set_index('localminute')  
 
@@ -60,23 +48,19 @@ def check_timestamp(temp_df):
     temp_df.index.name = "localminute"        
     return temp_df
 
-def sum_data(temp_df):
-    # sum the values of grid, solar and solar 2 row wise and assign it to the column total consumption.
+def sum_data(temp_df):# sum the values of grid, solar and solar 2 row wise and assign it to the column total consumption.
     total= temp_df[['grid', 'solar', 'solar2']].sum(axis=1)
     temp_df['total_consumption']=total    
     return temp_df
 
-def check_negative_consumption(temp_df):
-    # check if there are any negative values in total_consumption column
+def check_negative_consumption(temp_df): # check if there are any negative values in total_consumption column
     negative_rows= temp_df[temp_df[('total_consumption')] < 0]
     
-def resample_data(temp_df): 
-    # resample the data to 60 minute frequency using resample function and use mean method    
+def resample_data(temp_df): # resample the data to 60 minute frequency using resample function and use mean method    
     temp_df= temp_df.resample('60min').mean()       
     return temp_df
 
-def extract_time_features(wat):
-    # use datetime index function to extract following features/values from localminute column 
+def extract_time_features(wat): # use datetime index function to extract following features/values from localminute column 
     wat=wat.reset_index()
     wat['day']= wat['localminute'].dt.day
     wat['month']= wat['localminute'].dt.month
@@ -86,16 +70,14 @@ def extract_time_features(wat):
     wat.set_index('localminute')  
     return wat
 
-def extract_cons_features(temp_df): 
-    # extract previous three consumption to the current timestep and assign it to c-1,c-2,c-3 (tip:check shift function and fill unavailable values with zero) 
+def extract_cons_features(temp_df): # extract previous three consumption to the current timestep and assign it to c-1,c-2,c-3 (tip:check shift function and fill unavailable values with zero) 
     temp_df['c-1']= temp_df['total_consumption'].shift(1)
     temp_df['c-2']= temp_df['total_consumption'].shift(2)
     temp_df['c-3']= temp_df['total_consumption'].shift(3)
     temp_df=temp_df.fillna(0)
     return temp_df
 
-def check_outliers(temp_df):
-    # fill the appropriate z-score value to replace outlier values with nan in the next two lines   
+def check_outliers(temp_df): # fill the appropriate z-score value to replace outlier values with nan in the next two lines   
     temp_df['total_consumption']=temp_df['total_consumption'].mask(np.abs(stats.zscore(temp_df['total_consumption'])) > 3,np.nan)
     temp_df['solar']=temp_df['solar'].mask(np.abs(stats.zscore(temp_df['solar'])) > 3,np.nan)
     temp_df['total_consumption']=temp_df['total_consumption'].ffill()
@@ -103,11 +85,10 @@ def check_outliers(temp_df):
     return temp_df
 
 
-
-# DATA ANALYSIS FUNCTIONS
-
-def monthly_consumption(temp_df): 
-    # finding the montly consumption and plotting a bar graph
+#_________________________________#
+##### DATA ANALYSIS FUNCTIONS #####
+#¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨#
+def monthly_consumption(temp_df): # finding the montly consumption and plotting a bar graph
     consumption=list()
     solar_consumption=list()
     month=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']    
@@ -123,8 +104,7 @@ def monthly_consumption(temp_df):
     plt.bar(month, solar_consumption, color='y')
     plt.show()
 
-def daily_consumption(temp_df, day=int): 
-    # finding the daily consumption and plotting it 
+def daily_consumption(temp_df, day=int): # finding the daily consumption and plotting it 
     consumption=list()
     hour=[i for i in range(1,25)]  
     if day == 1:
@@ -147,8 +127,9 @@ def daily_consumption(temp_df, day=int):
     plt.show()
     
 
-
-# SPECIAL FUNCTION TO PREPARE FOR CONSUMPLTION DATA
+#___________________________________________________________#
+##### SPECIAL FUNCTION TO PREPARE FOR CONSUMPLTION DATA #####
+#¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨#
 
 def ReadAustinFile(data_file): # Read the data from the Austin file
     # load the excel file
