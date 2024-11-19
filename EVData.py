@@ -20,7 +20,7 @@ Data from Kasper, originally from "Analysis of residential EV energy flexibility
     #"ytick.labelsize": 12,           # Font size for y-tick labels})
 
 
-def ReadEVData(share_of_CP = float, no_of_EVs = int):
+def ReadEVData(share_of_CP = float, no_of_EVs = int): #Read EV data an create useable format
     share_of_SP = 1 - share_of_CP
 
     #Read the data file
@@ -74,7 +74,7 @@ def ReadEVData(share_of_CP = float, no_of_EVs = int):
 
     return month_df
 
-def FindMonthlyChargeEnergy(data = pd.DataFrame):
+def FindMonthlyChargeEnergy(data = pd.DataFrame): #Amount of energy used in one month for EV charging
     monthly_energy_use = 0
     for i in data['Charging']:
         monthly_energy_use += i
@@ -85,6 +85,6 @@ def FindMonthlyChargeEnergy(data = pd.DataFrame):
 if __name__ == '__main__':
 
     share_of_CP = 0.4
-    no_of_EVs = 25
+    no_of_EVs = 25 #Number of EVs
 
-    df = ReadEVData(share_of_CP=share_of_CP, no_of_EVs=no_of_EVs)
+    df = ReadEVData(share_of_CP = share_of_CP, no_of_EVs=no_of_EVs)
