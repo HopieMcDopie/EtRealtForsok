@@ -11,9 +11,9 @@ from GridTariff import GridTariffEnergy, GridTariffPower
 
 # _____________________________________________DATA INPUT_____________________________________________
 '''
-Her må vi lese inn en måned med forbruksdata og prisdata. 
-Disse må ha time-oppløsning og være i fomatet pandas dataframe. 
-De burde også operere med samme enhet, NOK og kWh.
+    Her må vi lese inn en måned med forbruksdata og prisdata. 
+    Disse må ha time-oppløsning og være i fomatet pandas dataframe. 
+    De burde også operere med samme enhet, NOK og kWh.
 '''
 
 SpotPrice = SpotPrices() # Gives the spot prices for NO3 for january 2024, hourly resolution
@@ -48,7 +48,7 @@ flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh
 
 # _____________________________________________MATHEMATICAL FORMULATION_____________________________________________
 '''
-Her må objekticfunskjonen sammen med alle constraintsene være definert først, så må modellen settes opp
+Her må objektivfunskjonen sammen med alle constraintsene være definert først, så må modellen settes opp
 '''
 # Objective function
 def Obj(m):
@@ -56,45 +56,49 @@ def Obj(m):
     # in addtion to the cost related to the power consumption decided by the grid tariff
     return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_imp[t] for t in m.T)  + m.C_grid_power
 
-
 #Energy balance constraints
 def HouseEnergyBalance(m, t):
     #Ensures that the imported energy to th houses equals the demand and the potential charging or 
     # discharging of the comuunity battery
     return m.y_house[t] == m.D[t] + m.e_cha[t] - m.e_dis[t] 
 
+#Modelling of the flexible EV battery 
 def EVEnergyBalance(m, t):
     #The modelling of the flexible EV charging is done through a conseptual battery, the charging of
     # this implies charging moved forwards in time, and teh discharging is demand that already has been
     # met by earlier charging
     return m.y_EV[t] == m.D_EV[t] + m.e_EV_cha[t] - m.e_EV_dis[t]
 
+#Defines grid import
 def GridImport(m, t):
     #Ensures that the total imported energy is the sum of what is going to the houses and to the EVs
     return m.y_imp[t] == m.y_house[t] + m.y_EV[t]
-
 
 #Monthly peak grid tariff constraints
 def Peak(m, t):
     #Finds the monthly peak consumption of power as the highest value of the grid import
     return m.peak >= m.y_imp[t]
 
+#Ensure single power tariff price-bracket activation
 def SignleSegment(m):
     #Ensures that only one of the price-brackets of the prower grid tariff is activated 
     return sum(m.z[i] for i in m.I) == 1
 
+#couples activated price bracket with price
 def Segment(m):
     #Ensures that the measured peak power activates the respective power tariff price-bracket
     return m.peak <= sum(m.z[i] * m.breakpoints[i] for i in m.I)
     
+#Relates the active power grid tariff price-breacket to the cost
 def TariffCosts(m):
-    #Relates the active power grid tariff price-breacket to the cost
     return m.C_grid_power == sum(m.costs[i]*m.z[i] for i in m.I)
 
 
+#_____________________________#
 # Community battery constraints
+
+#Ensures that the battery's State of Charge is dependent on the amount charged, 
 def SoC(m, t):
-    #Ensures that the battery's State of Charge is dependent on the amount charged, 
     # minus the amount discharged and the SoC of the previous hour.
     # Note that the efficiencies of charging and discharging are included, in addition
     # to an initial SoC for hour 0.
@@ -116,7 +120,10 @@ def DischargeCap(m, t):
     return m.e_dis[t] <= m.BatteryDischargeCap
 
 
+#______________________________________#
 # Modelling of the flexible EV charging
+
+
 def SoC_EV(m, t):
     #Models how much flexibility has been activated and when it is moved from
     if t == 0:
@@ -139,7 +146,7 @@ def DischargeCap_EV(m, t):
     # earlier hour...  
     return m.e_EV_dis[t] <= m.EV_BatteryPowerCap[t] 
 
-
+#______________________________________#
 # The set up of the optimization problem
 def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const): 
     #Instance
@@ -267,10 +274,8 @@ def Graphical_results(m):
     ax2.legend(loc = 'upper right')
     ax2.set_ylim([0,3])
     fig1.tight_layout()  # Adjust layout to prevent overlapping
-    plt.title('Results from optimization problem')
+    plt.title('Results from Pptimization Problem')
     plt.show()
-
-
 
 
     #plotting the house battery
@@ -292,7 +297,7 @@ def Graphical_results(m):
     ax2.legend(loc = 'upper right')
     ax2.set_ylim([0,3])
     fig2.tight_layout()  # Adjust layout to prevent overlapping
-    plt.title('Results from optimization problem')
+    plt.title('Results from Optimization Problem')
     plt.show()
 
 
@@ -315,14 +320,14 @@ def Graphical_results(m):
     ax2.legend(loc = 'upper right')
     ax2.set_ylim([0,3])
     fig3.tight_layout()  # Adjust layout to prevent overlapping
-    plt.title('Results from optimization problem')
+    plt.title('Results from Optimization Problem')
     plt.show()
 
 
 
 m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
 Solve(m)
-# Graphical_results(m)
+#Graphical_results(m)
 print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
 print(f'Peak power imported during the month: {pyo.value(m.peak):.2f} kW')
 print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
