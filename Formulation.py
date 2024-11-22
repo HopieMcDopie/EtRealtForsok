@@ -12,9 +12,9 @@ from GridTariff import GridTariffEnergy, GridTariffPower
 Her vil jeg legge inn at man kan skru av og på ting med True or False! Kanskje som en dictionary?
 
 """
-flexible_EV = True
+flexible_EV_on = True
 battery_on = True
-power_charge_grid_tariff_on = True
+power_grid_tariff_on = True
 step_grid_tariff = True # if False the linear model will be included!
 
 
@@ -60,7 +60,11 @@ flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh
 Her må objektivfunskjonen sammen med alle constraintsene være definert først, så må modellen settes opp
 '''
 # Objective function
-def Obj(m):
+def Obj_without_power_grid_tariff(m):
+    #The objective function of the optimization problem, is the sum of the costs of the consumed energy
+    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_imp[t] for t in m.T)  
+
+def Obj_with_power_grid_tariff(m):
     #The objective function of the optimization problem, is the sum of the costs of the consumed energy, 
     # in addtion to the cost related to the power consumption decided by the grid tariff
     return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_imp[t] for t in m.T)  + m.C_grid_power
@@ -171,17 +175,23 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.I = pyo.RangeSet(0, len(PowerTariff)-1) # 15 different price-brackets
     
     #Paramters
-    m.C_spot              = pyo.Param(m.T, initialize = SpotPrice)                                      # spot price input for the month
-    m.C_grid_energy       = pyo.Param(m.T, initialize = EnergyTariff)                                   # energy part of grid tariff
-    m.D                   = pyo.Param(m.T, initialize = Demand)                                         # aggregated household demand
-    m.D_EV                = pyo.Param(m.T, initialize = EV_data['Charging'])                            # aggregated EV demand
-    m.SoC0                = pyo.Param(initialize = batt_const['Initial State of Charge'])               # initial state of charge of the batter
-    m.BatteryCap          = pyo.Param(initialize = batt_const['Battery energy capacity'])               # max battery energy capacity [kWh]
+    m.C_spot              = pyo.Param(m.T, initialize = SpotPrice)                                      # spot price input for the month [NOK/kWh]
+    m.C_grid_energy       = pyo.Param(m.T, initialize = EnergyTariff)                                   # energy part of grid tariff [NOK/kWh]
+    m.D                   = pyo.Param(m.T, initialize = Demand)                                         # aggregated household demand [kWh]
+    m.D_EV                = pyo.Param(m.T, initialize = EV_data['Charging'])                            # aggregated EV demand [kWh]
+    m.SoC0                = pyo.Param(initialize = batt_const['Initial State of Charge'])               # initial state of charge of the battery [kWh]
+    if battery_on:
+        m.BatteryCap            = pyo.Param(initialize = batt_const['Battery energy capacity'])               # max battery energy capacity [kWh]
+    else:
+        m.BatteryCap            = pyo.Param(initialize = 0)                                                   # max battery energy capacity [kWh]
     m.BatteryChargeCap    = pyo.Param(initialize = batt_const['Charge capacity'])                       # charging speed/battery power capacity [kW]
     m.BatteryDischargeCap = pyo.Param(initialize = batt_const['Dishcharge capacity'])                   # disharging speed/battery power capacity [kW]
     m.eta                 = pyo.Param(initialize = batt_const['eta'])                                   # efficiency of charge/discharge
-    m.EV_BatteryEnergyCap = pyo.Param(initialize = flex_const['Monthly energy']*flex_const['Flexible']) # amount of flexible EV load
-    m.EV_BatteryPowerCap  = pyo.Param(m.T, initialize = EV_data['Available'])                           # available capacity in the grid
+    if flexible_EV_on:
+        m.EV_BatteryEnergyCap   = pyo.Param(initialize = flex_const['Monthly energy']*flex_const['Flexible']) # amount of flexible EV load
+    else:
+        m.EV_BatteryEnergyCap   = pyo.Param(initialize = 0)                                               # amount of flexible EV load
+    m.EV_BatteryPowerCap        = pyo.Param(m.T, initialize = EV_data['Available'])                           # available capacity in the grid
 
     #Creating the list of the grid tariff break-points and respective costs
     m.breakpoints = []
@@ -234,7 +244,10 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     
 
     #Objective function
-    m.Obj = pyo.Objective(rule = Obj, sense = pyo.minimize)
+    if power_grid_tariff_on:
+        m.Obj = pyo.Objective(rule = Obj_with_power_grid_tariff, sense = pyo.minimize)
+    else:
+        m.Obj = pyo.Objective(rule= Obj_without_power_grid_tariff, sense = pyo.minimize)
 
     return m
 
@@ -294,7 +307,7 @@ def Graphical_results(m):
     ax2.legend(loc = 'upper right')
     ax2.set_ylim([0,3])
     fig1.tight_layout()  # Adjust layout to prevent overlapping
-    plt.title('Results from Pptimization Problem')
+    plt.title('Results from Optimization Problem')
     plt.show()
 
 
@@ -347,7 +360,7 @@ def Graphical_results(m):
 
 m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
 Solve(m)
-#Graphical_results(m)
+Graphical_results(m)
 print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
 print(f'Peak power imported during the month: {pyo.value(m.peak):.2f} kW')
 print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
