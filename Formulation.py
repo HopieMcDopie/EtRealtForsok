@@ -8,6 +8,15 @@ from ConsumptionData import ReadCSVDemandFile
 from EVData import ReadEVData, FindMonthlyChargeEnergy
 from GridTariff import GridTariffEnergy, GridTariffPower
 
+"""
+Her vil jeg legge inn at man kan skru av og på ting med True or False! Kanskje som en dictionary?
+
+"""
+flexible_EV = True
+battery_on = True
+power_charge_grid_tariff_on = True
+step_grid_tariff = True # if False the linear model will be included!
+
 
 # _____________________________________________DATA INPUT_____________________________________________
 '''
@@ -42,7 +51,7 @@ batt_const = {'Battery energy capacity': 80, #kWh
              'eta': 0.975}
 
 flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh
-                            'Flexible': 0.2} # %
+                            'Flexible': 0.3} # %
 
 
 
@@ -131,9 +140,14 @@ def SoC_EV(m, t):
     else:
         return m.b_EV[t] == m.e_EV_cha[t]*m.eta - m.e_EV_dis[t]/m.eta + m.b_EV[t-1]
     
-def SoCCap_EV(m):
+
+def SoCCap_EV(m, t):
     # The total amount of potential flexible EV charging
-    return sum(m.b_EV[t] for t in m.T) <= m.EV_BatteryEnergyCap
+    return m.b_EV[t]  <= 105.1 #kW (average charge in a day)
+
+def Flex(m):
+    # Decides how much of the monthly demand could be flexible
+    return sum(m.e_EV_cha[t] for t in m.T) <= m.EV_BatteryEnergyCap
     
 def ChargeCap_EV(m, t):
     # The amount of EV charingg that can be moved is limited by the amount of 
@@ -178,7 +192,7 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
             upper = 10000
         else: 
             lower, upper = map(int, key.split('-'))
-        m.breakpoints.append(upper) 
+        m.breakpoints.append(upper)
         m.costs.append(value)
 
     #Variables
@@ -191,9 +205,17 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.b_EV          = pyo.Var(m.T, within = pyo.NonNegativeReals) # EV battery SoC [kWh]
     m.e_EV_cha      = pyo.Var(m.T, within = pyo.NonNegativeReals) # flexibility activated [kW]
     m.e_EV_dis      = pyo.Var(m.T, within = pyo.NonNegativeReals) # result of activated flexibility [kW]
-    m.peak          = pyo.Var(within = pyo.NonNegativeReals)      # peak power consumed during th month [kW]
     m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals)      # cost of power consumption [NOK]
-    m.z             = pyo.Var(m.I, within = pyo.Binary)           # binary variable that selects price-backet of power grid tariff
+
+    if step_grid_tariff:
+        m.peak          = pyo.Var(within = pyo.NonNegativeReals)      # peak power consumed during th month [kW]
+        m.z             = pyo.Var(m.I, within = pyo.Binary)           # binary variable that selects price-backet of power grid tariff
+        m.SingleSegment         = pyo.Constraint(rule = SignleSegment)
+        m.Segment               = pyo.Constraint(rule = Segment) 
+        m.TariffCosts           = pyo.Constraint(rule = TariffCosts)
+    else:
+        m.peak = pyo.Var(within = pyo.NonNegativeReals, bounds = (m.breakpoints[0], m.breakpoints[-1])) # peak power consumed during th month [kW]
+        m.piecewice = pyo.Piecewise(m.C_grid_power, m.peak, pw_pts = m.breakpoints, f_rule = m.costs, pw_repn = 'SOS2', pw_constr_type = 'EQ') #piecewice function
 
     #Constraints
     m.HouseEnergyBalance    = pyo.Constraint(m.T, rule = HouseEnergyBalance)
@@ -205,12 +227,10 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.ChargeCap             = pyo.Constraint(m.T, rule = ChargeCap) 
     m.DischargeCap          = pyo.Constraint(m.T, rule = DischargeCap)
     m.SoC_EV                = pyo.Constraint(m.T, rule = SoC_EV)
-    m.SoCCap_EV             = pyo.Constraint(rule = SoCCap_EV)
+    m.SoCCap_EV             = pyo.Constraint(m.T, rule = SoCCap_EV)
+    m.Flex                  = pyo.Constraint(rule= Flex)
     m.ChargeCap_EV          = pyo.Constraint(m.T, rule = ChargeCap_EV) 
-    m.DischargeCap_EV       = pyo.Constraint(m.T, rule = DischargeCap_EV)
-    m.SingleSegment         = pyo.Constraint(rule = SignleSegment)
-    m.Segment               = pyo.Constraint(rule = Segment) 
-    m.TariffCosts           = pyo.Constraint(rule = TariffCosts) 
+    m.DischargeCap_EV       = pyo.Constraint(m.T, rule = DischargeCap_EV)         
     
 
     #Objective function
