@@ -85,7 +85,7 @@ def EVEnergyBalance(m, t):
 #Defines grid import
 def GridImport(m, t):
     #Ensures that the total imported energy is the sum of what is going to the houses and to the EVs
-    return m.y_imp[t] == m.y_house[t] + m.y_EV[t]
+    return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t]
 
 #Monthly peak grid tariff constraints
 def Peak(m, t):
