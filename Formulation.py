@@ -140,9 +140,9 @@ def DischargeCap(m, t):
 def SoC_EV(m, t):
     #Models how much flexibility has been activated and when it is moved from
     if t == 0:
-        return m.b_EV[0] == m.e_EV_cha[0]*m.eta - m.e_EV_dis[0]/m.eta 
+        return m.b_EV[0] == m.e_EV_cha[0] - m.e_EV_dis[0] 
     else:
-        return m.b_EV[t] == m.e_EV_cha[t]*m.eta - m.e_EV_dis[t]/m.eta + m.b_EV[t-1]
+        return m.b_EV[t] == m.e_EV_cha[t] - m.e_EV_dis[t] + m.b_EV[t-1]
     
 
 def SoCCap_EV(m, t):
