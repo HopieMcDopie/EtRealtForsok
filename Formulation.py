@@ -5,8 +5,8 @@ def Initialize_Case(what2run): #"""Initialize the case based on user input."""
     if what2run == "base":
         flexible_EV_on = False
         battery_on = False
-        power_grid_tariff_on = False
-        step_grid_tariff = False  # if False the linear model will be included!
+        power_grid_tariff_on = True
+        step_grid_tariff = True  # if False the linear model will be included!
     elif what2run == "spot":
         flexible_EV_on = True
         battery_on = True
@@ -170,10 +170,11 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     #Paramters
     m.C_spot              = pyo.Param(m.T, initialize = SpotPrice)                                      # spot price input for the month [NOK/kWh]
     m.C_grid_energy       = pyo.Param(m.T, initialize = EnergyTariff)                                   # energy part of grid tariff [NOK/kWh]
-    m.CENS                = pyo.Param(initialize = 30)                                                  # NOK/kWh
+    m.CENS                = pyo.Param(     initialize = 30)                                             # cost of energy not supplied NOK/kWh
+
     m.D                   = pyo.Param(m.T, initialize = Demand)                                         # aggregated household demand [kWh]
     m.D_EV                = pyo.Param(m.T, initialize = EV_data['Charging'])                            # aggregated EV demand [kWh]
-    m.SoC0                = pyo.Param(initialize = batt_const['Initial State of Charge'])               # initial state of charge of the battery [kWh]
+    m.SoC0                = pyo.Param(     initialize = batt_const['Initial State of Charge'])          # initial state of charge of the battery [kWh]
     if battery_on:
         m.BatteryCap      = pyo.Param(initialize = batt_const['Battery energy capacity'])               # max battery energy capacity [kWh]
     else:

@@ -32,6 +32,7 @@ if __name__ == "__main__":
                   'Dishcharge capacity': 80*0.20, #kW
                   'eta': 0.975}
 
+    #Determening how flexibility for EV-charging is modelled
     flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh
                   'Flexible': 0.3} # %
 
