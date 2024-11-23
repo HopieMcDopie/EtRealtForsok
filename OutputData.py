@@ -1,90 +1,55 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import pyomo.environ as pyo
 
 
 
 def Store_Results_In_File(m, what2run): #Storing model output values to an excel sheet
-    hours = []
-    demand = []
-    EV_demand = []
-    price = []
-    battery = []
-    e_cha = []
-    e_dis = []
-    EV_battery = []
-    e_EV_cha = []
-    e_EV_dis = []
-    y = []
-    y_house = []
-    y_EV = []
-    ENS = []
-
-    for t in m.T:
-        hours.append(t)
-        price.append(m.C_spot[t])
-        demand.append(m.D[t])
-        EV_demand.append(m.D_EV[t])
-        battery.append(m.b[t].value)
-        e_cha.append(m.e_cha[t].value)
-        e_dis.append(m.e_dis[t].value)
-        EV_battery.append(m.b_EV[t].value)
-        e_EV_cha.append(m.e_EV_cha[t].value)
-        e_EV_dis.append(m.e_EV_dis[t].value)
-        y.append(m.y_imp[t].value)
-        y_house.append(m.y_house[t].value)
-        y_EV.append(m.y_EV[t].value)
-        ENS.append(m.ENS[t].value)
+    #Creating dataframes from pyomo solution to be used in excel
+    results_df = pd.DataFrame({
+        'Hour': list(m.T),
+        'Price [NOK/kWh]': [m.C_spot[t] for t in m.T],
+        'Demand [kW]': [m.D[t] for t in m.T],
+        'EV Demand [kW]': [m.D_EV[t] for t in m.T],
+        'Battery SOC [kWh]': [m.b[t].value for t in m.T],
+        'Charge Power [kW]': [m.e_cha[t].value for t in m.T],
+        'Discharge Power [kW]': [m.e_dis[t].value for t in m.T],
+        'EV SOC [kWh]': [m.b_EV[t].value for t in m.T],
+        'EV Charge Power [kW]': [m.e_EV_cha[t].value for t in m.T],
+        'EV Discharge Power [kW]': [m.e_EV_dis[t].value for t in m.T],
+        'Power Import [kW]': [m.y_imp[t].value for t in m.T],
+        'ENS': [m.ENS[t].value for t in m.T]
+    })
     
-    #Naming excel-sheet variable based on the scenario
-    if what2run == "base": 
-        base_results_file = pd.concat([], axis=1)    
+    
+    #Creating an excel sheet for the scenario run
+    if what2run == "base":
+        file_name = 'Base_Case_Results.xlsx' 
 
     elif what2run == "spot":
-        spot_results_file = pd.concat([], axis=1)
+        file_name = 'Spot_Price_Results.xlsx'
 
     elif what2run == "spot and grid":
-        spot_and_grid_results_file = pd.concat([], axis=1)
+        file_name = 'Spot_Grid_Price_Results.xlsx'
 
-    #Collecting the various sheets into one file
-    with pd.ExcelWriter('output.xlsx', engine='xlsxwriter') as writer: # Write to Excel with multiple sheets
-        base_results_file.to_excel(writer, sheet_name = 'Base') 
-        spot_results_file.to_excel(writer, sheet_name = 'Spot')
-        spot_and_grid_results_file.to_excel(writer, sheet_name = 'Spot & Grid')
+    results_df.to_excel(file_name, index = False)
     return ()
 
 
 def Graphical_Results(m):
-    hours = []
-    demand = []
-    EV_demand = []
-    price = []
-    battery = []
-    e_cha = []
-    e_dis = []
-    EV_battery = []
-    e_EV_cha = []
-    e_EV_dis = []
-    y = []
-    y_house = []
-    y_EV = []
-    ENS = []
-
-    for t in m.T:
-        hours.append(t)
-        price.append(m.C_spot[t])
-        demand.append(m.D[t])
-        EV_demand.append(m.D_EV[t])
-        battery.append(m.b[t].value)
-        e_cha.append(m.e_cha[t].value)
-        e_dis.append(m.e_dis[t].value)
-        EV_battery.append(m.b_EV[t].value)
-        e_EV_cha.append(m.e_EV_cha[t].value)
-        e_EV_dis.append(m.e_EV_dis[t].value)
-        y.append(m.y_imp[t].value)
-        y_house.append(m.y_house[t].value)
-        y_EV.append(m.y_EV[t].value)
-        ENS.append(m.ENS[t].value)
+    hours = list(m.T)
+    price = [m.C_spot[t] for t in m.T]
+    demand = [m.D[t] for t in m.T]
+    EV_demand = [m.D_EV[t] for t in m.T]
+    battery = [m.b[t].value for t in m.T]
+    e_cha = [m.e_cha[t].value for t in m.T]
+    e_dis = [m.e_dis[t].value for t in m.T]
+    EV_battery = [m.b_EV[t].value for t in m.T]
+    e_EV_cha = [m.e_EV_cha[t].value for t in m.T]
+    e_EV_dis = [m.e_EV_dis[t].value for t in m.T]
+    y = [m.y_imp[t].value for t in m.T]
+    ENS = [m.ENS[t].value for t in m.T]
 
     #plotting the demand and imports
     fig1, ax1 = plt.subplots()

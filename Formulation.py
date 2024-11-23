@@ -58,7 +58,7 @@ Her må objektivfunskjonen sammen med alle constraintsene være definert først,
 # Objective function
 def Obj_without_power_grid_tariff(m):
     #The objective function of the optimization problem, is the sum of the costs of the consumed energy
-    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_imp[t] for t in m.T)  
+    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_imp[t] + m.CENS * m.ENS[t] for t in m.T)  
 
 def Obj_with_power_grid_tariff(m):
     #The objective function of the optimization problem, is the sum of the costs of the consumed energy, 
@@ -210,17 +210,21 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.b_EV          = pyo.Var(m.T, within = pyo.NonNegativeReals) # EV battery SoC [kWh]
     m.e_EV_cha      = pyo.Var(m.T, within = pyo.NonNegativeReals) # flexibility activated [kW]
     m.e_EV_dis      = pyo.Var(m.T, within = pyo.NonNegativeReals) # result of activated flexibility [kW]
-    m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals)      # cost of power consumption [NOK]
 
-    if step_grid_tariff:
-        m.peak          = pyo.Var(within = pyo.NonNegativeReals)      # peak power consumed during th month [kW]
-        m.z             = pyo.Var(m.I, within = pyo.Binary)           # binary variable that selects price-backet of power grid tariff
-        m.SingleSegment         = pyo.Constraint(rule = SignleSegment)
-        m.Segment               = pyo.Constraint(rule = Segment) 
-        m.TariffCosts           = pyo.Constraint(rule = TariffCosts)
+    if power_grid_tariff_on:
+        m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals)      # cost of power consumption [NOK]
+        if step_grid_tariff:
+            m.peak          = pyo.Var(within = pyo.NonNegativeReals)      # peak power consumed during th month [kW]
+            m.z             = pyo.Var(m.I, within = pyo.Binary)           # binary variable that selects price-backet of power grid tariff
+            m.SingleSegment         = pyo.Constraint(rule = SignleSegment) 
+            m.Segment               = pyo.Constraint(rule = Segment) 
+            m.TariffCosts           = pyo.Constraint(rule = TariffCosts)
+        else:
+            m.peak = pyo.Var(within = pyo.NonNegativeReals, bounds = (m.breakpoints[0], m.breakpoints[-1])) # peak power consumed during th month [kW]
+            m.piecewice = pyo.Piecewise(m.C_grid_power, m.peak, pw_pts = m.breakpoints, f_rule = m.costs, pw_repn = 'SOS2', pw_constr_type = 'EQ') #piecewice function
     else:
-        m.peak = pyo.Var(within = pyo.NonNegativeReals, bounds = (m.breakpoints[0], m.breakpoints[-1])) # peak power consumed during th month [kW]
-        m.piecewice = pyo.Piecewise(m.C_grid_power, m.peak, pw_pts = m.breakpoints, f_rule = m.costs, pw_repn = 'SOS2', pw_constr_type = 'EQ') #piecewice function
+        m.peak          = pyo.Var(within = pyo.NonNegativeReals)
+        m.C_grid_power = pyo.Param(initialize = 0)
 
     #Constraints
     m.HouseEnergyBalance    = pyo.Constraint(m.T, rule = HouseEnergyBalance)
@@ -242,7 +246,7 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     if power_grid_tariff_on:
         m.Obj = pyo.Objective(rule = Obj_with_power_grid_tariff, sense = pyo.minimize)
     else:
-        m.Obj = pyo.Objective(rule= Obj_without_power_grid_tariff, sense = pyo.minimize)
+        m.Obj = pyo.Objective(rule = Obj_without_power_grid_tariff, sense = pyo.minimize)
 
     return m
 
