@@ -13,7 +13,7 @@ __________________________________________
 """
 if __name__ == "__main__":
     #User imput to define the scenarios
-    what2run = input('\n\nDefine the case? \n    1: If base case with no flexibility, write "1" \n    2. For EV and battery flexibility considering only spot prices, write "2"\n    3. Same as "2" but also considering grid tariff, write "3"\nAnswer: ')
+    what2run = input('\n\nDefine the case to be run: \n    1: If base case with no flexibility, write "1" \n    2. For EV and battery flexibility considering only the spot prices, write "2"\n    3. Same as "2" but also considering the grid tariff, write "3"\nAnswer: ')
 
     #Gather input values to be used in "ModelSetUp" function:
     flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff = Initialize_Case(what2run)
@@ -43,3 +43,6 @@ if __name__ == "__main__":
     print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
     print(f'Peak power imported during the month: {pyo.value(m.peak):.2f} kW')
     print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
+    ENS = [m.ENS[t].value for t in m.T]
+    if any(value != 0 for value in ENS):
+        print('!! There is energy not supplied in the model!!')

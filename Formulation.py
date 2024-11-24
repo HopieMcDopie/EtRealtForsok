@@ -34,12 +34,12 @@ def Initialize_Case(what2run):
 # Objective function
 def Obj_without_power_grid_tariff(m):
     #The objective function of the optimization problem, is the sum of the costs of the consumed energy
-    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_imp[t] + m.CENS * m.ENS[t] for t in m.T)  
+    return sum((m.C_spot[t]+ m.C_grid_energy[t])*m.y_imp[t] + m.CENS * m.ENS[t] for t in m.T)  
 
 def Obj_with_power_grid_tariff(m):
     #The objective function of the optimization problem, is the sum of the costs of the consumed energy, 
     # in addtion to the cost related to the power consumption decided by the grid tariff
-    return sum((m.C_spot[t] + m.C_grid_energy[t] )*m.y_imp[t] + m.CENS * m.ENS[t] for t in m.T)  +  m.C_grid_power
+    return sum((m.C_spot[t] + m.C_grid_energy[t])*m.y_imp[t] + m.CENS * m.ENS[t] for t in m.T)  +  m.C_grid_power
 
 #Energy balance constraints
 def HouseEnergyBalance(m, t):
