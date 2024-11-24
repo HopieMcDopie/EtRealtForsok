@@ -146,7 +146,7 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     #Paramters
     m.C_spot              = pyo.Param(m.T, initialize = SpotPrice)                                      # spot price input for the month [NOK/kWh]
     m.C_grid_energy       = pyo.Param(m.T, initialize = EnergyTariff)                                   # energy part of grid tariff [NOK/kWh]
-    m.CENS                = pyo.Param(     initialize = 30)                                             # cost of energy not supplied NOK/kWh
+    m.CENS                = pyo.Param(     initialize = 23.5)                                           # cost of energy not supplied NOK/kWh
 
     m.D                   = pyo.Param(m.T, initialize = Demand)                                         # aggregated household demand [kWh]
     m.D_EV                = pyo.Param(m.T, initialize = EV_data['Charging'])                            # aggregated EV demand [kWh]
