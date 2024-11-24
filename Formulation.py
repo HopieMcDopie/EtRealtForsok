@@ -1,60 +1,36 @@
 import pyomo.environ as pyo
 from pyomo.opt import SolverFactory
 
-def Initialize_Case(what2run): #"""Initialize the case based on user input."""
-    if what2run == "base":
+
+#"""Initialize the case based on user input."""
+def Initialize_Case(what2run):
+    if what2run == "1":
         flexible_EV_on = False
-        battery_on = False
+        battery_on = False #community battery
         power_grid_tariff_on = True
         step_grid_tariff = True  # if False the linear model will be included!
-    elif what2run == "spot":
-        flexible_EV_on = True
+    elif what2run == "2":
+        flexible_EV_on = True 
         battery_on = True
         power_grid_tariff_on = False
         step_grid_tariff = False  # if False the linear model will be included!
-    elif what2run == "spot and grid":
+    elif what2run == "3":
         flexible_EV_on = True
         battery_on = True
         power_grid_tariff_on = True
         step_grid_tariff = True
     else:
-        print('---The input was not correct. Pull yourself together----\n---Running base case---\n')
+        print('*****\n---The input was not correct. Pull yourself together----\n---Running Base case---\n*****')
         flexible_EV_on = False
         battery_on = False
         power_grid_tariff_on = False
         step_grid_tariff = False
 
     return flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff
-# _____________________________________________DATA INPUT_____________________________________________
-'''
-    Her må vi lese inn en måned med forbruksdata og prisdata. 
-    Disse må ha time-oppløsning og være i fomatet pandas dataframe. 
-    De burde også operere med samme enhet, NOK og kWh.
-'''
+#___________________________________________________________________________________________________________________#
+# _____________________________________________MATHEMATICAL FORMULATION_____________________________________________#
+#___________________________________________________________________________________________________________________#
 
-
-
-# _____________________________________________DEFINE CONSTANTS_____________________________________________
-'''
-Her må vi definerer konstanter som feks batteriparametere etc.
-
-# These constants are linked to the shared community battery
-batt_const = {'Battery energy capacity': 80, #kWh
-             'Initial State of Charge': 0, #kWh
-             'Charge capacity': 80*0.20, #kW
-             'Dishcharge capacity': 80*0.20, #kW
-             'eta': 0.975}
-
-flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh
-                            'Flexible': 0.3} # %
-'''
-
-
-
-# _____________________________________________MATHEMATICAL FORMULATION_____________________________________________
-'''
-Her må objektivfunskjonen sammen med alle constraintsene være definert først, så må modellen settes opp
-'''
 # Objective function
 def Obj_without_power_grid_tariff(m):
     #The objective function of the optimization problem, is the sum of the costs of the consumed energy
@@ -252,10 +228,7 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     return m
 
 
-# Solving and presenting the data
-'''
-Her må vi solve og lagre data, gjerne presentere i gode visuelle grafer
-'''
+# Solving
 def Solve(m):
     opt = SolverFactory('gurobi')
     return opt.solve(m, load_solutions = True)

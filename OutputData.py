@@ -24,13 +24,13 @@ def Store_Results_In_File(m, what2run): #Storing model output values to an excel
     
     
     #Creating an excel sheet for the scenario run
-    if what2run == "base":
+    if what2run == "1":
         file_name = 'Base_Case_Results.xlsx' 
 
-    elif what2run == "spot":
+    elif what2run == "2":
         file_name = 'Spot_Price_Results.xlsx'
 
-    elif what2run == "spot and grid":
+    elif what2run == "3":
         file_name = 'Spot_Grid_Price_Results.xlsx'
 
     results_df.to_excel(file_name, index = False)
@@ -40,6 +40,8 @@ def Store_Results_In_File(m, what2run): #Storing model output values to an excel
 def Graphical_Results(m):
     hours = list(m.T)
     price = [m.C_spot[t] for t in m.T]
+    y = [m.y_imp[t].value for t in m.T]
+    y_house = [m.y_house[t].value for t in m.T]
     demand = [m.D[t] for t in m.T]
     EV_demand = [m.D_EV[t] for t in m.T]
     battery = [m.b[t].value for t in m.T]
@@ -48,18 +50,18 @@ def Graphical_Results(m):
     EV_battery = [m.b_EV[t].value for t in m.T]
     e_EV_cha = [m.e_EV_cha[t].value for t in m.T]
     e_EV_dis = [m.e_EV_dis[t].value for t in m.T]
-    y = [m.y_imp[t].value for t in m.T]
     ENS = [m.ENS[t].value for t in m.T]
-
+    """
+#THE FIRST PLOT
     #plotting the demand and imports
     fig1, ax1 = plt.subplots()
     ax1.plot(hours, y, label='Power import', color='tab:red')
-    ax1.plot(hours, demand, color ='tab:orange', linestyle = '--', label='House Demand')
+    ax1.plot(hours, demand, color ='tab:orange', linestyle = '--', label='Household demand')
     ax1.plot(hours, EV_demand, color = 'tab:grey', linestyle = '--', label = 'EV demand')
     #ax1.plot(hours, ENS, color = 'y', label = 'ENS')
     ax1.axhline(y=0, color= 'k', linestyle = '--')
     ax1.set_xlabel('Hours')
-    ax1.set_xticks(hours)
+    ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]')
     ax1.legend(loc = 'upper left')
     ax1.set_xlim(0,47)
@@ -69,20 +71,44 @@ def Graphical_Results(m):
     ax2.legend(loc = 'upper right')
     ax2.set_ylim([0,3])
     fig1.tight_layout()  # Adjust layout to prevent overlapping
-    plt.title('Results from Optimization Problem')
-    plt.show()
+    plt.title('Demand and Imports')
+    #plt.show()
 
 
-    #plotting the house battery
+#THE SECOND PLOT
+    #plotting the community battery
     fig2, ax1 = plt.subplots()
     ax1.plot(hours, battery, label='State of Charge', color='tab:green')
     ax1.plot(hours, y, label='Power import', color='tab:red')
-    ax1.plot(hours, demand, color ='tab:orange', linestyle = '--', label='Demand')
+    ax1.plot(hours, demand, color ='tab:orange', linestyle = '--', label='Household demand')
     ax1.bar(hours, e_cha, color = 'green')
     ax1.bar(hours, e_dis, color = 'red')
     ax1.axhline(y=0, color= 'k', linestyle = '--')
     ax1.set_xlabel('Hours')
-    ax1.set_xticks(hours)
+    ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
+    ax1.set_ylabel('Power [kW]')
+    ax1.legend(loc = 'upper left')
+    ax1.set_xlim(0,47)
+    ax2 = ax1.twinx() #Creates a second y-axis on the right
+    ax2.plot(hours, price, label = 'Spotprice', color = 'tab:blue')
+    ax2.set_ylabel('Spot Price [NOK/kWh]')
+    ax2.legend(loc = 'upper right')
+    ax2.set_ylim([0,1.2])
+    fig2.tight_layout()  # Adjust layout to prevent overlapping
+    plt.title('The Community Battery')
+    #plt.show()
+
+#THE THIRD PLOT
+    #plotting the EV "battery"
+    fig3, ax1 = plt.subplots()
+    ax1.plot(hours, EV_battery, label='EV "SoC"', color='tab:green')
+    ax1.plot(hours, y, label='Power import', color='tab:red')
+    ax1.plot(hours, EV_demand, color ='tab:gray', linestyle = '--', label='EV Demand')
+    ax1.bar(hours, e_EV_cha, color = 'green')
+    ax1.bar(hours, e_EV_dis, color = 'red')
+    ax1.axhline(y=0, color= 'k', linestyle = '--')
+    ax1.set_xlabel('Hours')
+    ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]')
     ax1.legend(loc = 'upper left')
     ax1.set_xlim(0,47)
@@ -91,31 +117,88 @@ def Graphical_Results(m):
     ax2.set_ylabel('Spot Price [NOK/kWh]')
     ax2.legend(loc = 'upper right')
     ax2.set_ylim([0,3])
-    fig2.tight_layout()  # Adjust layout to prevent overlapping
-    plt.title('Results from Optimization Problem')
-    plt.show()
+    fig3.tight_layout()  # Adjust layout to prevent overlapping
+    plt.title('Flexible EV charging')
+    #plt.show()
+    """
 
+#THE FOURTH PLOT, SAME AS NUMBER ONE BUT STACKED BAR
+    #Stacked bar plot
+    fig, ax1 = plt.subplots()
+    ax1.step(hours, y, where = 'post', label='Power import', color='tab:red')
+    ax1.bar(hours, demand, align='edge', label='Household demand', color='tab:orange')
+    ax1.bar(hours, EV_demand, align='edge', bottom = demand, label='Regular EV charging', color='tab:grey')
 
-    #plotting the EV "battery"
-    fig3, ax1 = plt.subplots()
-    ax1.plot(hours, EV_battery, label='EV "State of Charge"', color='tab:green')
-    ax1.plot(hours, y, label='Power import', color='tab:red')
-    ax1.plot(hours, EV_demand, color ='tab:orange', linestyle = '--', label='EV Demand')
-    ax1.bar(hours, e_EV_cha, color = 'green')
-    ax1.bar(hours, e_EV_dis, color = 'red')
+    # Format primary y-axis
+    ax1.axhline(y=0, color='k', linestyle='--')
+    ax1.set_xlabel('Hours')
+    ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
+    ax1.set_ylabel('Power [kW]')
+    ax1.legend(loc='upper left', ncol = 3)
+    ax1.set_xlim(0, 47)
+
+    # Adding the secondary y-axis for Spotprice
+    ax2 = ax1.twinx()
+    ax2.step(hours, price, where = 'post', label='Spotprice', color='tab:blue')
+    ax2.set_ylabel('Spot Price [NOK/kWh]')
+    ax2.legend(loc='upper right')
+    ax2.set_ylim([0, 3])
+
+    # Adding a title and adjusting layout
+    plt.title('Demand and Imports same as the first figure as stacked bar')
+    fig.tight_layout()
+
+#THE Fifth plot, same as SECOND PLOT
+    #plotting the community battery
+    fig, ax1 = plt.subplots()
+    ax1.step(hours, battery, where = 'post', label='State of Charge', color='tab:green')
+    #ax1.step(hours, y_house, where = 'post', label='House import', color='tab:red')
+    #ax1.plot(hours, y, label='Power import', color='tab:red')
+    ax1.bar(hours, demand, align='edge', label='Household demand', color ='tab:orange')
+
+    
+    # Adjust the demand after subtracting the discharge
+    adjusted_demand = [(d - e) for d, e in zip(demand, e_dis)] #each element is the result of subtracting e_dis from demand.
+    ax1.bar(hours, e_cha, align='edge', bottom = adjusted_demand, label = 'Battery charge', color = 'green')
+    ax1.bar(hours, e_dis, align='edge', bottom = adjusted_demand, label = 'Battery discharge', color='red')  # Subtract discharge
+
     ax1.axhline(y=0, color= 'k', linestyle = '--')
     ax1.set_xlabel('Hours')
-    ax1.set_xticks(hours)
+    ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]')
-    ax1.legend(loc = 'upper left')
-    ax1.set_xlim(0,743)
+    ax1.legend(loc='upper left', ncol=2)
+    ax1.set_xlim(0,47)
     ax2 = ax1.twinx() #Creates a second y-axis on the right
-    ax2.plot(hours, price, label = 'Spotprice', color = 'tab:blue')
+    ax2.step(hours, price, where = 'post', label = 'Spotprice', color = 'tab:blue')
     ax2.set_ylabel('Spot Price [NOK/kWh]')
     ax2.legend(loc = 'upper right')
-    ax2.set_ylim([0,3])
+    ax2.set_ylim([0, 1.2])
+    fig.tight_layout()  # Adjust layout to prevent overlapping
+    plt.title('The Community Battery')
+    #plt.show()
+
+
+#THE SIXTH PLOTS, SAME AS THE THIRD PLOT
+    #plotting the EV "battery"
+    fig3, ax1 = plt.subplots()
+    ax1.step(hours, EV_battery, where = 'post', label='EV flexibility potential', color='tab:green')
+    ax1.step(hours, y, where = 'post', label='Power import', color='tab:red')
+    ax1.bar(hours, EV_demand, align='edge', color ='tab:gray', label='Regular EV charging')
+
+    adjusted_EV_demand = [(d - e) for d, e in zip(EV_demand, e_EV_dis)] #each element is the result of subtracting e_dis from demand.
+    ax1.bar(hours, e_EV_cha, align='edge', bottom = adjusted_EV_demand, label = 'Additional EV charging', color = 'green')
+    ax1.bar(hours, e_EV_dis, align='edge', bottom = adjusted_EV_demand, label = 'Averted EV charging', color='red')  # Subtract discharge
+    ax1.axhline(y=0, color= 'k', linestyle = '--')
+    ax1.set_xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
+    ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
+    ax1.set_ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    ax1.legend(loc = 'upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif'})
+    ax1.set_xlim(0,47)
+    ax2 = ax1.twinx() #Creates a second y-axis on the right
+    ax2.step(hours, price, where = 'post', label = 'Spotprice', color = 'tab:blue')
+    ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=12, fontweight='bold', family='serif')
+    ax2.legend(loc = 'upper right', prop = {'weight': 'bold', 'family': 'serif'})
+    ax2.set_ylim([0, 1.2])
     fig3.tight_layout()  # Adjust layout to prevent overlapping
-    plt.title('Results from Optimization Problem')
+    plt.title('Flexible EV charging', fontsize=18, fontweight='bold', family='serif')
     plt.show()
-
-

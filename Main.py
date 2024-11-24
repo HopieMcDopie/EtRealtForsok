@@ -13,7 +13,7 @@ __________________________________________
 """
 if __name__ == "__main__":
     #User imput to define the scenarios
-    what2run = input('Define the case? \n    If base case with no flexibility, write "base" \n    If flexibility only considering spot prices, write "spot"\n    If flexibility both spot and grid tariff prices, write "spot and grid"\nAnswer: ')
+    what2run = input('\n\nDefine the case? \n    1: If base case with no flexibility, write "1" \n    2. For EV and battery flexibility considering only spot prices, write "2"\n    3. Same as "2" but also considering grid tariff, write "3"\nAnswer: ')
 
     #Gather input values to be used in "ModelSetUp" function:
     flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff = Initialize_Case(what2run)
