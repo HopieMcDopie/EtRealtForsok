@@ -271,4 +271,16 @@ if __name__ == '__main__':
     plt.ylabel('kW')
     plt.title('Aggregated demand of 25 households')
     plt.show()
+
+    no_hours_consumption_below_16 = 0
+    total = 0
+    for hour in demand:
+        total += demand[hour]
+        if demand[hour] <= 16:
+            no_hours_consumption_below_16 += 1
+    
+    #antall timer med forbruk uncer 16 kW er 0
+    #miste forbruk er 16.9kW
+    #gjennomsnittlig forbruk er 40 kW
+
     
