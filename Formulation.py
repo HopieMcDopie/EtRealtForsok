@@ -10,7 +10,6 @@ for i in range(744):
 
 grid_stop[113] = 0
 
-print(grid_stop)
 
 #"""Initialize the case based on user input."""
 def Initialize_Case(what2run):
@@ -79,14 +78,14 @@ def GridImport(m, t):
     #     return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t] #normal operation for the other hours
     return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t]
 
-def OffSignal_y_total(m):
-    return
+def OffSignal_y_total(m, t):
+    return m.y_imp[t] <= grid_stop[t]
 
-def OffSignal_y_house(m):
-    return
+def OffSignal_y_house(m, t):
+    return m.y_house[t] <= grid_stop[t]
 
-def OffSignal_y_EV(m):
-    return 
+def OffSignal_y_EV(m, t):
+    return m.y_EV[t] <= grid_stop[t]
 
 #Monthly peak grid tariff constraints
 def Peak(m, t):
@@ -236,7 +235,7 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.HouseEnergyBalance    = pyo.Constraint(m.T, rule = HouseEnergyBalance)
     m.EVEnergyBalance       = pyo.Constraint(m.T, rule = EVEnergyBalance)
     m.GridImport            = pyo.Constraint(m.T, rule = GridImport)
-    m.Peak                  = pyo.Constraint(m.T,rule = Peak)
+    m.Peak                  = pyo.Constraint(m.T, rule = Peak)
     m.SoC                   = pyo.Constraint(m.T, rule = SoC)
     m.SoCCap                = pyo.Constraint(m.T, rule = SoCCap)
     m.ChargeCap             = pyo.Constraint(m.T, rule = ChargeCap) 
@@ -245,7 +244,10 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.SoCCap_EV             = pyo.Constraint(m.T, rule = SoCCap_EV)
     m.Flex                  = pyo.Constraint(rule= Flex)
     m.ChargeCap_EV          = pyo.Constraint(m.T, rule = ChargeCap_EV) 
-    m.DischargeCap_EV       = pyo.Constraint(m.T, rule = DischargeCap_EV)         
+    m.DischargeCap_EV       = pyo.Constraint(m.T, rule = DischargeCap_EV)  
+    m.Off_y_imp             = pyo.Constraint(m.T, rule = OffSignal_y_total) 
+    m.Off_y_house           = pyo.Constraint(m.T, rule = OffSignal_y_house) 
+    m.Off_y_EV              = pyo.Constraint(m.T, rule = OffSignal_y_EV)       
     
 
     #Objective function
