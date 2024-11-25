@@ -1,6 +1,16 @@
+import numpy as np
 import pyomo.environ as pyo
 from pyomo.opt import SolverFactory
 
+
+grid_stop = []
+
+for i in range(744):
+    grid_stop.append(1000000)
+
+grid_stop[113] = 0
+
+print(grid_stop)
 
 #"""Initialize the case based on user input."""
 def Initialize_Case(what2run):
@@ -45,7 +55,7 @@ def Obj_with_power_grid_tariff(m):
 def HouseEnergyBalance(m, t):
     #Ensures that the imported energy to th houses equals the demand and the potential charging or 
     # discharging of the comuunity battery
-    #if t == 113: #check at most expensive hour
+    #f t == 113: #check at most expensive hour
     #    return m.y_house[t] == 0 #no import to house in hour 113
     #else: #normal operation
     return m.y_house[t] == m.D[t] + m.e_cha[t] - m.e_dis[t] 
@@ -63,11 +73,20 @@ def EVEnergyBalance(m, t):
 #Defines grid import
 def GridImport(m, t):
     #Ensures that the total imported energy is the sum of what is going to the houses and to the EVs
-    #if t == 113: #cosideres hour 133, most expensive hour
-    #    return m.y_imp[t] == 0 #no import during this hour
-    #else:
-    #    return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t] #normal operation for the other hours
+    # if t == 113: #cosideres hour 133, most expensive hour
+    #     return m.y_imp[t] == 0 #no import during this hour
+    # else:
+    #     return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t] #normal operation for the other hours
     return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t]
+
+def OffSignal_y_total(m):
+    return
+
+def OffSignal_y_house(m):
+    return
+
+def OffSignal_y_EV(m):
+    return 
 
 #Monthly peak grid tariff constraints
 def Peak(m, t):
