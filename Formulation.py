@@ -54,9 +54,6 @@ def Obj_with_power_grid_tariff(m):
 def HouseEnergyBalance(m, t):
     #Ensures that the imported energy to th houses equals the demand and the potential charging or 
     # discharging of the comuunity battery
-    #f t == 113: #check at most expensive hour
-    #    return m.y_house[t] == 0 #no import to house in hour 113
-    #else: #normal operation
     return m.y_house[t] == m.D[t] + m.e_cha[t] - m.e_dis[t] 
 
 #Modelling of the flexible EV battery 
@@ -64,28 +61,17 @@ def EVEnergyBalance(m, t):
     #The modelling of the flexible EV charging is done through a conseptual battery, the charging of
     # this implies charging moved forwards in time, and teh discharging is demand that already has been
     # met by earlier charging
-    #if t == 113: #cheack at most expensive hour
-    #    return m.y_EV[t] == 0 #no EV charging now
-    #else: 
     return m.y_EV[t] == m.D_EV[t] + m.e_EV_cha[t] - m.e_EV_dis[t]
 
 #Defines grid import
 def GridImport(m, t):
     #Ensures that the total imported energy is the sum of what is going to the houses and to the EVs
-    # if t == 113: #cosideres hour 133, most expensive hour
-    #     return m.y_imp[t] == 0 #no import during this hour
-    # else:
-    #     return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t] #normal operation for the other hours
     return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t]
 
-def OffSignal_y_total(m, t):
+def OffSignal_y_imp(m, t):
     return m.y_imp[t] <= grid_stop[t]
 
-def OffSignal_y_house(m, t):
-    return m.y_house[t] <= grid_stop[t]
 
-def OffSignal_y_EV(m, t):
-    return m.y_EV[t] <= grid_stop[t]
 
 #Monthly peak grid tariff constraints
 def Peak(m, t):
@@ -245,9 +231,8 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.Flex                  = pyo.Constraint(rule= Flex)
     m.ChargeCap_EV          = pyo.Constraint(m.T, rule = ChargeCap_EV) 
     m.DischargeCap_EV       = pyo.Constraint(m.T, rule = DischargeCap_EV)  
-    m.Off_y_imp             = pyo.Constraint(m.T, rule = OffSignal_y_total) 
-    m.Off_y_house           = pyo.Constraint(m.T, rule = OffSignal_y_house) 
-    m.Off_y_EV              = pyo.Constraint(m.T, rule = OffSignal_y_EV)       
+    m.OffSignal_y_imp       = pyo.Constraint(m.T, rule = OffSignal_y_imp) 
+      
     
 
     #Objective function
