@@ -167,14 +167,14 @@ def Graphical_Results(m):
     ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]')
     ax1.legend(loc='upper left', ncol = 3)
-    ax1.set_xlim(0, 47)
+    ax1.set_xlim(0, 743)
 
     # Adding the secondary y-axis for Spotprice
     ax2 = ax1.twinx()
     ax2.step(hours, price, where = 'post', label='Spotprice', color='tab:blue', linewidth = 2)
     ax2.set_ylabel('Spot Price [NOK/kWh]')
     ax2.legend(loc='upper right')
-    ax2.set_ylim([0, 3])
+    ax2.set_ylim([0, 7])
 
     # Adding a title and adjusting layout
     plt.title('Power import and what it goes to')
@@ -222,7 +222,7 @@ def Graphical_Results(m):
     ax2.step(hours, price, where = 'post', label = 'Spotprice', color = 'tab:blue')
     ax2.set_ylabel('Spot Price [NOK/kWh]')
     ax2.legend(loc = 'upper right')
-    ax2.set_ylim([0, 1.2])
+    ax2.set_ylim([0, 7])
     fig.tight_layout()  # Adjust layout to prevent overlapping
     plt.title('The Community Battery')
 
@@ -238,14 +238,14 @@ def Graphical_Results(m):
     ax1.set_xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
     ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
-    ax1.legend(loc = 'upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif'})
+    ax1.legend(loc = 'upper left', ncol = 2, prop = {'weight': 'bold', 'family': 'serif'})
     ax1.set_xlim(0,743)
 
     ax2 = ax1.twinx() #Creates a second y-axis on the right
     ax2.step(hours, price, where = 'post', label = 'Spotprice', color = 'tab:blue')
     ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=12, fontweight='bold', family='serif')
     ax2.legend(loc = 'upper right', prop = {'weight': 'bold', 'family': 'serif'})
-    ax2.set_ylim([0, 1.2])
+    ax2.set_ylim([0, 7])
     fig3.tight_layout()  # Adjust layout to prevent overlapping
     plt.title('Flexible EV charging', fontsize=18, fontweight='bold', family='serif')
     plt.show()

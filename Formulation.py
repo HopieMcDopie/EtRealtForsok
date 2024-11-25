@@ -45,6 +45,9 @@ def Obj_with_power_grid_tariff(m):
 def HouseEnergyBalance(m, t):
     #Ensures that the imported energy to th houses equals the demand and the potential charging or 
     # discharging of the comuunity battery
+    #if t == 113: #check at most expensive hour
+    #    return m.y_house[t] == 0 #no import to house in hour 113
+    #else: #normal operation
     return m.y_house[t] == m.D[t] + m.e_cha[t] - m.e_dis[t] 
 
 #Modelling of the flexible EV battery 
@@ -52,11 +55,18 @@ def EVEnergyBalance(m, t):
     #The modelling of the flexible EV charging is done through a conseptual battery, the charging of
     # this implies charging moved forwards in time, and teh discharging is demand that already has been
     # met by earlier charging
+    #if t == 113: #cheack at most expensive hour
+    #    return m.y_EV[t] == 0 #no EV charging now
+    #else: 
     return m.y_EV[t] == m.D_EV[t] + m.e_EV_cha[t] - m.e_EV_dis[t]
 
 #Defines grid import
 def GridImport(m, t):
     #Ensures that the total imported energy is the sum of what is going to the houses and to the EVs
+    #if t == 113: #cosideres hour 133, most expensive hour
+    #    return m.y_imp[t] == 0 #no import during this hour
+    #else:
+    #    return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t] #normal operation for the other hours
     return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t]
 
 #Monthly peak grid tariff constraints
