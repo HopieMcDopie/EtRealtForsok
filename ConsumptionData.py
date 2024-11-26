@@ -257,7 +257,7 @@ if __name__ == '__main__':
 
     # _______DATA PROCESSING FROM LARGE TO SMALLER FILE___________
     """
-    Remember to uncomment/comment out line if you want to store updated values!!
+    Remember to uncomment/comment out line in ReadAustinFile-function if you want to store updated values!!
     """
     #HouseDemand = ReadAustinFile('15minute_data_austin.csv')
     #df = pd.DataFrame.from_dict(HouseDemand, orient='index', columns=['Total_Consumption'])
@@ -270,5 +270,39 @@ if __name__ == '__main__':
     plt.xlabel('hours')
     plt.ylabel('kW')
     plt.title('Aggregated demand of 25 households')
+    plt.show()
+
+    no_hours_consumption_below_16 = 0
+    total = 0
+    for hour in demand:
+        total += demand[hour]
+        if demand[hour] <= 16:
+            no_hours_consumption_below_16 += 1
+    
+    #antall timer med forbruk uncer 16 kW er 0
+    #miste forbruk er 16.9kW
+    #gjennomsnittlig forbruk er 40 kW
+
+    daily_demand = [list(demand.values())[i:i+24] for i in range(0, len(demand), 24)]
+
+    transposed = zip(*daily_demand)
+
+    hourly_demand = list(transposed)
+    hourly_mean = np.array([sum(hourly_demand[i]) for i in range(len(hourly_demand))])/len(hourly_demand)
+    hourly_std = np.array([stats.tstd(hourly_demand[i]) for i in range(len(hourly_demand))])
+
+    top = hourly_mean + hourly_std
+    bottom = hourly_mean - hourly_std
+
+
+
+    plt.step(range(24), hourly_mean, linewidth = 2)
+    plt.fill_between(range(24), top, bottom, step = 'pre', alpha = 0.2)
+    plt.xticks(range(24))
+    plt.xlabel('Hours', fontsize=12, fontweight='bold', family='serif')
+    plt.ylabel('Power [kW]', fontsize=12, fontweight='bold', family='serif')
+    plt.title('Average hourly aggregated household demand and standard deviation', fontsize=18, fontweight='bold', family='serif')
+    plt.tight_layout()
+    plt.grid('on')
     plt.show()
     
