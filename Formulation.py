@@ -8,7 +8,7 @@ grid_stop = []
 for i in range(744):
     grid_stop.append(1000000)
 
-grid_stop[113] = 0
+#grid_stop[113] = 0
 
 
 #"""Initialize the case based on user input."""
