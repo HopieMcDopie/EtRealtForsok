@@ -61,10 +61,13 @@ def ReadEVData(share_of_CP = float, no_of_EVs = int): #Read EV data an create us
             month['Available'].extend(end['Available'])
             month['Charging'].extend(end['Charging'])
 
+    for hour in range(len(month['Available'])):
+        month['Available'][hour] = month['Available'][hour] + month['Charging'][hour]
+
     month_df = pd.DataFrame(month)
 
     # plt.figure()
-    # plt.plot((month_df['Available'][0:24]+month_df['Charging']), label = 'Available')
+    # plt.plot(month_df['Available'][0:24], label = 'Available')
     # plt.plot(month_df['Charging'][0:24], label = 'Charging')
     # plt.legend()
     # plt.xlabel('hours')
