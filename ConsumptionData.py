@@ -296,12 +296,13 @@ if __name__ == '__main__':
 
 
 
-    plt.step(range(24), hourly_mean, linewidth = 2)
-    plt.fill_between(range(24), top, bottom, step = 'pre', alpha = 0.2)
+    plt.step(range(24), hourly_mean, linewidth = 2, color = 'tab:red')
+    plt.fill_between(range(24), top, bottom, step = 'pre', alpha = 0.2, color = 'tab:red')
     plt.xticks(range(24))
     plt.xlabel('Hours', fontsize=12, fontweight='bold', family='serif')
     plt.ylabel('Power [kW]', fontsize=12, fontweight='bold', family='serif')
-    plt.title('Average hourly aggregated household demand and standard deviation', fontsize=18, fontweight='bold', family='serif')
+    plt.title('Average hourly aggregated household demand with standard deviation', fontsize=18, fontweight='bold', family='serif')
+    plt.xlim(0,23)
     plt.tight_layout()
     plt.grid('on')
     plt.show()
