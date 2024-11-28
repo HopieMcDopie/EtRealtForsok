@@ -48,10 +48,9 @@ if __name__ == '__main__':
     
 
     prices_list = list(prices.values())
+    print(max(prices_list))
     daily_prices = [prices_list[i:i+24] for i in range(0, len(prices_list), 24)]
-    print(len(daily_prices))
     daily_prices.pop(4)
-    print(len(daily_prices))
     hourly_prices = zip(*daily_prices)
     hourly_prices = list(hourly_prices)
     mean_prices = np.array([sum(hourly_prices[i]) for i in range(len(hourly_prices))])/len(hourly_prices)

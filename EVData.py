@@ -61,8 +61,8 @@ def ReadEVData(share_of_CP = float, no_of_EVs = int): #Read EV data an create us
             month['Available'].extend(end['Available'])
             month['Charging'].extend(end['Charging'])
 
-    for hour in range(len(month['Available'])):
-        month['Available'][hour] = month['Available'][hour] + month['Charging'][hour]
+    #for hour in range(len(month['Available'])):
+    #    month['Available'][hour] = month['Available'][hour] + month['Charging'][hour]
 
     month_df = pd.DataFrame(month)
 
