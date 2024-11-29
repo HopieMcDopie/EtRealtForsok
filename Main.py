@@ -13,10 +13,10 @@ __________________________________________
 """
 if __name__ == "__main__":
     #User imput to define the scenarios
-    what2run = input('\n\nDefine the case to be run: \n    1: If base case with no flexibility, write "1" \n    2. For EV and battery flexibility considering only the spot prices, write "2"\n    3. Same as "2" but also considering the grid tariff, write "3"\nAnswer: ')
+    what2run = input('\n\nDefine the case to be run: \n    1: Base Case: no BESS, no EV flex, write "b" \n    2. Case 2: Active BESS and EV flex, not MPGT, write "1"\n    3. Same as "1" including MPGT, write "2"\n    4. Same as "3" including IBDR, write "3"\nAnswer: ')
 
     #Gather input values to be used in "ModelSetUp" function:
-    flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff = Initialize_Case(what2run)
+    flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff, IBDR_on = Initialize_Case(what2run)
     SpotPrice = SpotPrices() # Gives the spot prices for NO3 for january 2024, hourly resolution
     EnergyTariff = GridTariffEnergy() # Gives the energy part of the grid tariff for NO3, hourly resolution
     PowerTariff = GridTariffPower() # Gives the power part of the grid tariff for NO3
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh
                   'Flexible': 0.3} # %
 
-    m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff)
+    m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff, IBDR_on)
     Solve(m) #Solvign the optimisation problem
     Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
     Graphical_Results(m) #Printing graphical results of values from optimisation values

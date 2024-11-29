@@ -3,39 +3,44 @@ import pyomo.environ as pyo
 from pyomo.opt import SolverFactory
 
 
-grid_stop = []
-
-for i in range(744):
-    grid_stop.append(1000000)
-
-#grid_stop[113] = 0
-
-
 #"""Initialize the case based on user input."""
 def Initialize_Case(what2run):
-    if what2run == "1":
-        flexible_EV_on = False
-        battery_on = False #community battery
-        power_grid_tariff_on = True
-        step_grid_tariff = True  # if False the linear model will be included!
-    elif what2run == "2":
-        flexible_EV_on = True 
-        battery_on = True
-        power_grid_tariff_on = False
-        step_grid_tariff = False  # if False the linear model will be included!
-    elif what2run == "3":
-        flexible_EV_on = True
-        battery_on = True
-        power_grid_tariff_on = True
-        step_grid_tariff = True
+    if what2run == "b": #Base case
+        flexible_EV_on = False       #flexible EV charge not active
+        battery_on = False           #community BESS not active
+        power_grid_tariff_on = True  #grid tariff not active
+        step_grid_tariff = True      #stepwise grid tariff active
+        IBDR_on = False            #PBDR not active
+    elif what2run == "1": #Case 1
+        flexible_EV_on = True        #flexible EV charge active
+        battery_on = True            #community BESS active
+        power_grid_tariff_on = False #grid tariff not active
+        step_grid_tariff = False     #if False the linear model will be included!
+        IBDR_on = False            #PBDR not active
+    elif what2run == "2": #Case 2
+        flexible_EV_on = True        #flexible EV charge active
+        battery_on = True            #community BESS active
+        power_grid_tariff_on = True  #grid tariff active
+        step_grid_tariff = True      #stepwise grid tariff active'
+        IBDR_on = False            #PBDR not active
+    elif what2run == "3": #Case 3
+        flexible_EV_on = True        #flexible EV charge active
+        battery_on = True            #community BESS active
+        power_grid_tariff_on = True  #grid tariff active
+        step_grid_tariff = True      #stepwise grid tariff active
+        IBDR_on = True              #PBDR  active    
     else:
         print('*****\n---The input was not correct. Pull yourself together----\n---Running Base case---\n*****')
         flexible_EV_on = False
         battery_on = False
-        power_grid_tariff_on = False
-        step_grid_tariff = False
+        power_grid_tariff_on = True
+        step_grid_tariff = True
+        IBDR_on = False            #PBDR not active
 
-    return flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff
+    return flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff, IBDR_on
+
+
+
 #___________________________________________________________________________________________________________________#
 # _____________________________________________MATHEMATICAL FORMULATION_____________________________________________#
 #___________________________________________________________________________________________________________________#
@@ -68,10 +73,9 @@ def GridImport(m, t):
     #Ensures that the total imported energy is the sum of what is going to the houses and to the EVs
     return m.y_imp[t] + m.ENS[t] == m.y_house[t] + m.y_EV[t]
 
+#Limiting grid import for hour t
 def OffSignal_y_imp(m, t):
-    return m.y_imp[t] <= grid_stop[t]
-
-
+    return m.y_imp[t] <= m.grid_stop[t]
 
 #Monthly peak grid tariff constraints
 def Peak(m, t):
@@ -149,7 +153,7 @@ def DischargeCap_EV(m, t):
 
 #______________________________________#
 # The set up of the optimization problem
-def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff): 
+def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff, IBDR_on): 
     #Instance
     m = pyo.ConcreteModel()
 
@@ -177,6 +181,12 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     else:
         m.EV_BatEnergyCap = pyo.Param(initialize = 0)                                                   # amount of flexible EV load
     m.EV_BatteryPowerCap  = pyo.Param(m.T, initialize = EV_data['Available'])                           # available capacity in the grid
+    m.grid_stop           = pyo.Var(m.T, initialize = 1000000, within = pyo.NonNegativeReals)           # limiting y_imp < 10^6, to be used with IBDR
+    if IBDR_on:
+        hour_restricted   = int(input('\nWhat hour should y_imp be restricted? Answer: \n'))            
+        power_restricted  = int(input('\nHow many kW should y_imp be restricted to? Answer: \n'))
+        m.grid_stop[hour_restricted].fix(power_restricted)                                               #restrict based on input values
+
 
     #Creating the list of the grid tariff break-points and respective costs
     m.breakpoints = []
@@ -205,17 +215,17 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     if power_grid_tariff_on:
         m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals)      # cost of power consumption [NOK]
         if step_grid_tariff:
-            m.peak          = pyo.Var(within = pyo.NonNegativeReals)      # peak power consumed during th month [kW]
-            m.z             = pyo.Var(m.I, within = pyo.Binary)           # binary variable that selects price-backet of power grid tariff
+            m.peak                  = pyo.Var(within = pyo.NonNegativeReals)      # peak power consumed during th month [kW]
+            m.z                     = pyo.Var(m.I, within = pyo.Binary)           # binary variable that selects price-backet of power grid tariff
             m.SingleSegment         = pyo.Constraint(rule = SignleSegment) 
             m.Segment               = pyo.Constraint(rule = Segment) 
             m.TariffCosts           = pyo.Constraint(rule = TariffCosts)
         else:
-            m.peak = pyo.Var(within = pyo.NonNegativeReals, bounds = (m.breakpoints[0], m.breakpoints[-1])) # peak power consumed during th month [kW]
+            m.peak      = pyo.Var(within = pyo.NonNegativeReals, bounds = (m.breakpoints[0], m.breakpoints[-1])) # peak power consumed during th month [kW]
             m.piecewice = pyo.Piecewise(m.C_grid_power, m.peak, pw_pts = m.breakpoints, f_rule = m.costs, pw_repn = 'SOS2', pw_constr_type = 'EQ') #piecewice function
     else:
         m.peak          = pyo.Var(within = pyo.NonNegativeReals)
-        m.C_grid_power = pyo.Param(initialize = 0)
+        m.C_grid_power  = pyo.Param(initialize = 0)
 
     #Constraints
     m.HouseEnergyBalance    = pyo.Constraint(m.T, rule = HouseEnergyBalance)

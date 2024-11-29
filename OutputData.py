@@ -23,12 +23,14 @@ def Store_Results_In_File(m, what2run): #Storing model output values to an excel
     })
     
     #Creating an excel sheet for the scenario run
-    if what2run == "1":
+    if what2run == "b":
         file_name = 'Base_Case_Results.xlsx' 
-    elif what2run == "2":
+    elif what2run == "1":
         file_name = 'Spot_Price_Results.xlsx'
-    elif what2run == "3":
+    elif what2run == "2":
         file_name = 'Spot_Grid_Price_Results.xlsx'
+    elif what2run == "3":
+        file_name = 'IBDR_Results.xlsx'
 
     results_df.to_excel(file_name, index = False)
     return ()
