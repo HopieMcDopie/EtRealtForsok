@@ -1,6 +1,6 @@
 import pyomo.environ as pyo
 from Formulation import Solve, ModelSetUp, Initialize_Case
-from OutputData import Graphical_Results, Store_Results_In_File
+from OutputData import Graphical_Results, Store_Results_In_File, Box_Plots
 from SpotPrice import SpotPrices
 from GridTariff import GridTariffEnergy, GridTariffPower
 from EVData import ReadEVData, FindMonthlyChargeEnergy
@@ -46,3 +46,4 @@ if __name__ == "__main__":
     ENS = [m.ENS[t].value for t in m.T]
     if any(value != 0 for value in ENS):
         print('!! There is energy not supplied in the model!!')
+    Box_Plots(m)

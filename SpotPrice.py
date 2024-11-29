@@ -1,5 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy import stats
 
 """
 spot prices gathererd from https://newtransparency.entsoe.eu/market/energyPrices on the 12.11.2024
@@ -35,8 +37,36 @@ if __name__ == '__main__':
     prices = SpotPrices()
 
     plt.figure()
-    plt.plot(prices.values())
-    plt.xlabel('Hours')
-    plt.ylabel('Price [NOK/kWh]')
-    plt.title('Day-Ahead Prices for January 2024 for NO3')
+    plt.step(range(744), prices.values())
+    plt.xticks(range(0,743+24,24))
+    plt.xlabel('Hours', fontsize=12, fontweight='bold', family='serif')
+    plt.ylabel('Price [NOK/kWh]', fontsize=12, fontweight='bold', family='serif')
+    plt.title('Day-Ahead Prices for January 2024 for NO3', fontsize=18, fontweight='bold', family='serif')
+    plt.xlim(0,743)
+    plt.tight_layout()
+    plt.grid('on')
+    
+
+    prices_list = list(prices.values())
+    print(max(prices_list))
+    daily_prices = [prices_list[i:i+24] for i in range(0, len(prices_list), 24)]
+    daily_prices.pop(4)
+    hourly_prices = zip(*daily_prices)
+    hourly_prices = list(hourly_prices)
+    mean_prices = np.array([sum(hourly_prices[i]) for i in range(len(hourly_prices))])/len(hourly_prices)
+    std_prices = np.array([stats.tstd(hourly_prices[i]) for i in range(len(hourly_prices))])
+
+    top = mean_prices + std_prices
+    bottom = mean_prices - std_prices
+
+    plt.figure()
+    plt.step(range(24), mean_prices, linewidth = 2)
+    plt.fill_between(range(24), top, bottom, step = 'pre', alpha = 0.2)
+    plt.xlabel('Hours', fontsize=12, fontweight='bold', family='serif')
+    plt.ylabel('Price [NOK/kWh]', fontsize=12, fontweight='bold', family='serif')
+    plt.title('Average hourly prices with standard deviation for January 2024 for NO3', fontsize=18, fontweight='bold', family='serif')
+    plt.xticks(range(24))
+    plt.xlim(0,23)
+    plt.tight_layout()
+    plt.grid('on')
     plt.show()
