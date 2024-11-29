@@ -19,18 +19,26 @@ def Store_Results_In_File(m, what2run): #Storing model output values to an excel
         'EV Charge Power [kW]': [m.e_EV_cha[t].value for t in m.T],
         'EV Discharge Power [kW]': [m.e_EV_dis[t].value for t in m.T],
         'Power Import [kW]': [m.y_imp[t].value for t in m.T],
-        'ENS': [m.ENS[t].value for t in m.T]
+        'ENS': [m.ENS[t].value for t in m.T],
+        'CENS': [m.CENS.value * m.ENS[t].value for t in m.T]
     })
     
     #Creating an excel sheet for the scenario run
     if what2run == "b":
         file_name = 'Base_Case_Results.xlsx' 
+        print('Base_Case_Results.xlsx is created')
     elif what2run == "1":
         file_name = 'Spot_Price_Results.xlsx'
+        print('Spot_Price_Results.xlsx is created')
     elif what2run == "2":
         file_name = 'Spot_Grid_Price_Results.xlsx'
+        print('Spot_Grid_Price_Results.xlsx is created')
     elif what2run == "3":
         file_name = 'IBDR_Results.xlsx'
+        print('IBDR_Results.xlsx is created')
+    else:
+        file_name = 'Base_Case_Results.xlsx' 
+        print('Base_Case_Results.xlsx is created')
 
     results_df.to_excel(file_name, index = False)
     return ()

@@ -13,7 +13,7 @@ __________________________________________
 """
 if __name__ == "__main__":
     #User imput to define the scenarios
-    what2run = input('\n\nDefine the case to be run: \n    1: Base Case: no BESS, no EV flex, write "b" \n    2. Case 2: Active BESS and EV flex, not MPGT, write "1"\n    3. Same as "1" including MPGT, write "2"\n    4. Same as "3" including IBDR, write "3"\nAnswer: ')
+    what2run = input('\n\nDefine the case to be run: \n     Base Case: write "b" \n     Case 1: write "1"\n     Case 2: write "2"\n     Case 3: write "3"\nAnswer: ')
 
     #Gather input values to be used in "ModelSetUp" function:
     flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff, IBDR_on = Initialize_Case(what2run)
