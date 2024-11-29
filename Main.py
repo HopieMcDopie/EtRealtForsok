@@ -30,7 +30,8 @@ if __name__ == "__main__":
                   'Initial State of Charge': 0, #kWh
                   'Charge capacity': 80*0.20, #kW
                   'Dishcharge capacity': 80*0.20, #kW
-                  'eta': 0.975}
+                  'eta_cha': 0.85, #BESS charging capacity
+                  'eta_dis': 0.95} #BESS discharging capacity
 
     #Determening how flexibility for EV-charging is modelled
     flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh

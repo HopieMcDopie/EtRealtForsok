@@ -107,9 +107,9 @@ def SoC(m, t):
     # Note that the efficiencies of charging and discharging are included, in addition
     # to an initial SoC for hour 0.
     if t == 0:
-        return m.b[0] == m.e_cha[0]*m.eta - m.e_dis[0]/m.eta + m.SoC0
+        return m.b[0] == m.e_cha[0]*m.eta_cha - m.e_dis[0]/m.eta_dis + m.SoC0
     else:
-        return m.b[t] == m.e_cha[t]*m.eta - m.e_dis[t]/m.eta + m.b[t-1]
+        return m.b[t] == m.e_cha[t]*m.eta_cha - m.e_dis[t]/m.eta_dis + m.b[t-1]
     
 def SoCCap(m, t):
     #Ensures that the battery stays within its energy limitations
@@ -176,7 +176,8 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
         m.BatteryCap      = pyo.Param(initialize = 0)                                                   # max battery energy capacity [kWh]
     m.BatteryChargeCap    = pyo.Param(initialize = batt_const['Charge capacity'])                       # charging speed/battery power capacity [kW]
     m.BatteryDischargeCap = pyo.Param(initialize = batt_const['Dishcharge capacity'])                   # disharging speed/battery power capacity [kW]
-    m.eta                 = pyo.Param(initialize = batt_const['eta'])                                   # efficiency of charge/discharge
+    m.eta_cha             = pyo.Param(initialize = batt_const['eta_cha'])                               # efficiency of charge
+    m.eta_dis             = pyo.Param(initialize = batt_const['eta_dis'])                               # efficiency of discharge
     if flexible_EV_on:
         m.EV_BatEnergyCap = pyo.Param(initialize = flex_const['Monthly energy']*flex_const['Flexible']) # amount of flexible EV load
     else:
@@ -184,8 +185,8 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.EV_BatteryPowerCap  = pyo.Param(m.T, initialize = EV_data['Available'])                           # available capacity in the grid
     m.grid_stop           = pyo.Var(m.T, initialize = 1000000, within = pyo.NonNegativeReals)           # limiting y_imp < 10^6, to be used with IBDR
     if IBDR_on:
-        hour_restricted   = int(input('\nWhat hour should y_imp be restricted?\n    Answer:'))            
-        power_restricted  = int(input('\nHow many kW should y_imp be restricted to?\n    Answer:'))
+        hour_restricted   = int(input('\nWhat hour should y_imp be restricted?\n    Answer: '))            
+        power_restricted  = int(input('\nHow many kW should y_imp be restricted to?\n    Answer: '))
         m.grid_stop[hour_restricted].fix(power_restricted)                                               #restrict based on input values
 
 
