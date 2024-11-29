@@ -183,8 +183,8 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.EV_BatteryPowerCap  = pyo.Param(m.T, initialize = EV_data['Available'])                           # available capacity in the grid
     m.grid_stop           = pyo.Var(m.T, initialize = 1000000, within = pyo.NonNegativeReals)           # limiting y_imp < 10^6, to be used with IBDR
     if IBDR_on:
-        hour_restricted   = int(input('\nWhat hour should y_imp be restricted? Answer: \n'))            
-        power_restricted  = int(input('\nHow many kW should y_imp be restricted to? Answer: \n'))
+        hour_restricted   = int(input('\nWhat hour should y_imp be restricted?\n    Answer:'))            
+        power_restricted  = int(input('\nHow many kW should y_imp be restricted to?\n    Answer:'))
         m.grid_stop[hour_restricted].fix(power_restricted)                                               #restrict based on input values
 
 
