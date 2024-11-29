@@ -37,7 +37,7 @@ def Store_Results_In_File(m, what2run): #Storing model output values to an excel
     return ()
 
 
-def Graphical_Results(m):
+def Graphical_Results(m): #Function to plot results
     hours = list(m.T)
     price = np.array([m.C_spot[t] for t in m.T])
     y = np.array([m.y_imp[t].value for t in m.T])
