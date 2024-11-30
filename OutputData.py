@@ -28,14 +28,14 @@ def Store_Results_In_File(m, what2run): #Storing model output values to an excel
         file_name = 'Base_Case_Results.xlsx' 
         print('Base_Case_Results.xlsx is created')
     elif what2run == "1":
-        file_name = 'Spot_Price_Results.xlsx'
-        print('Spot_Price_Results.xlsx is created')
+        file_name = 'Case1_Results.xlsx'
+        print('Case1_Results.xlsx is created')
     elif what2run == "2":
-        file_name = 'Spot_Grid_Price_Results.xlsx'
-        print('Spot_Grid_Price_Results.xlsx is created')
+        file_name = 'Case2_Results.xlsx'
+        print('Case2_Results.xlsx is created')
     elif what2run == "3":
-        file_name = 'IBDR_Results.xlsx'
-        print('IBDR_Results.xlsx is created')
+        file_name = 'Case3_Results.xlsx'
+        print('Case3_Results.xlsx is created')
     else:
         file_name = 'Base_Case_Results.xlsx' 
         print('Base_Case_Results.xlsx is created')
