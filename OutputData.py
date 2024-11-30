@@ -58,7 +58,7 @@ def Graphical_Results(m): #Function to plot results
     e_EV_cha = np.array([m.e_EV_cha[t].value for t in m.T])
     e_EV_dis = np.array([m.e_EV_dis[t].value for t in m.T])
     ENS = np.array([m.ENS[t].value for t in m.T])
-
+ 
     adjusted_demand = np.array([(d - e) for d, e in zip(demand, e_dis)]) #each element is the result of subtracting e_dis from demand.
     adjusted_EV_demand = np.array([(d - e) for d, e in zip(EV_demand, e_EV_dis)]) #each element is the result of subtracting e_dis from demand.
 
@@ -83,7 +83,7 @@ def Graphical_Results(m): #Function to plot results
 
     # Adding the secondary y-axis for Spotprice
     ax2 = ax1.twinx()
-    ax2.step(hours, price, where = 'post', label='Spotprice', color='tab:blue', linewidth = 2)
+    ax2.step(hours, price, where = 'post', label='Spot price', color='tab:blue', linewidth = 2)
     ax2.set_ylabel('Spot Price [NOK/kWh]')
     ax2.legend(loc='upper right')
     ax2.set_ylim([0, 7])
@@ -107,7 +107,7 @@ def Graphical_Results(m): #Function to plot results
     ax1.set_xlim(0,743)
 
     ax2 = ax1.twinx() #Creates a second y-axis on the right
-    ax2.step(hours, price, where = 'post', label = 'Spotprice', color = 'tab:blue')
+    ax2.step(hours, price, where = 'post', label = 'Spot price', color = 'tab:blue')
     ax2.set_ylabel('Spot Price [NOK/kWh]')
     ax2.legend(loc = 'upper right')
     ax2.set_ylim([0, 7])
@@ -130,7 +130,7 @@ def Graphical_Results(m): #Function to plot results
     ax1.set_xlim(0,743)
 
     ax2 = ax1.twinx() #Creates a second y-axis on the right
-    ax2.step(hours, price, where = 'post', label = 'Spotprice', color = 'tab:blue')
+    ax2.step(hours, price, where = 'post', label = 'Spot price', color = 'tab:blue')
     ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=12, fontweight='bold', family='serif')
     ax2.legend(loc = 'upper right', prop = {'weight': 'bold', 'family': 'serif'})
     ax2.set_ylim([0, 7])
