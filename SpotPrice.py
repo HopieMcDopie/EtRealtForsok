@@ -38,8 +38,8 @@ if __name__ == '__main__':
 
     plt.figure()
     plt.step(range(744), prices.values())
-    plt.xticks(range(0,743+24,24))
-    plt.xlabel('Hours', fontsize=12, fontweight='bold', family='serif')
+    plt.xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])
+    plt.xlabel('Days', fontsize=12, fontweight='bold', family='serif')
     plt.ylabel('Price [NOK/kWh]', fontsize=12, fontweight='bold', family='serif')
     plt.title('Day-Ahead Prices for January 2024 for NO3', fontsize=18, fontweight='bold', family='serif')
     plt.xlim(0,743)
