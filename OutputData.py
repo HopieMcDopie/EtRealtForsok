@@ -62,78 +62,87 @@ def Graphical_Results(m): #Function to plot results
     adjusted_demand = np.array([(d - e) for d, e in zip(demand, e_dis)]) #each element is the result of subtracting e_dis from demand.
     adjusted_EV_demand = np.array([(d - e) for d, e in zip(EV_demand, e_EV_dis)]) #each element is the result of subtracting e_dis from demand.
 
+    print('Actual peak power: ', max(y))
+
+    plt.rc('xtick', labelsize=10)  # X-tick customization
+    plt.rc('ytick', labelsize=10)  # Y-tick customization
+    plt.rc('font', family='serif') # Change font family globally
+
 #a plot showcasing where the energy import is coming from
     #Stacked bar plot
-    fig, ax1 = plt.subplots()
+    fig, ax1 = plt.subplots(figsize = (10,6))
     ax1.step(hours, y, where = 'post', label='Power import', color='k', linewidth = 2)
     ax1.bar(hours, adjusted_demand, align='edge', label='Household demand', color='lightgrey')
     ax1.bar(hours, adjusted_EV_demand, align='edge', bottom = adjusted_demand, label='Regular EV charging', color='tab:grey')
-    ax1.bar(hours, e_EV_cha, align= 'edge', bottom = adjusted_demand + adjusted_EV_demand , label = 'additional EV charging', color = 'green')
+    ax1.bar(hours, e_EV_cha, align= 'edge', bottom = adjusted_demand + adjusted_EV_demand , label = 'Additional EV charging', color = 'green')
     ax1.bar(hours, e_cha, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_cha, label = 'BESS charging', color = 'tab:green')
     ax1.bar(hours, e_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_cha + e_cha, label = 'BESS discharging', color = 'tab:red')
-    ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_cha + e_cha + e_dis, label = 'avoided EV charging', color = 'red')
+    ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_cha + e_cha + e_dis, label = 'Avoided EV charging', color = 'red')
     ax1.bar(hours, ENS, align = 'edge', color = 'yellow', label = 'ENS')
 
     # Format primary y-axis
-    ax1.set_xlabel('Hours')
-    ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
-    ax1.set_ylabel('Power [kW]')
-    ax1.legend(loc='upper left', ncol = 3)
-    ax1.set_xlim(0, 743)
+    ax1.set_xlabel('Days',fontsize=12, fontweight='bold', family='serif')
+    ax1.set_xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])  # Reducing ticks for better readability
+    ax1.set_ylabel('Power [kW]',fontsize=12, fontweight='bold', family='serif')
+    ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif'})
+    ax1.set_xlim(24*21, 24*28)
 
     # Adding the secondary y-axis for Spotprice
     ax2 = ax1.twinx()
     ax2.step(hours, price, where = 'post', label='Spot price', color='tab:blue', linewidth = 2)
-    ax2.set_ylabel('Spot Price [NOK/kWh]')
-    ax2.legend(loc='upper right')
+    ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=12, fontweight='bold', family='serif')
+    ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif'})
     ax2.set_ylim([0, 7])
 
     # Adding a title and adjusting layout
-    plt.title('Power import and what it goes to')
+    plt.title('Power import and distribution', fontsize=18, fontweight='bold', family='serif')
     fig.tight_layout()
+
 
 
 #a plot showcasing how the battery operates
     #plotting the community battery
-    fig, ax1 = plt.subplots()
+    fig, ax1 = plt.subplots(figsize = (10,6))
     ax1.step(hours, battery, where = 'post', label='State of Charge', color='tab:green')
     ax1.bar(hours, e_cha, align='edge', label = 'Battery charge', color = 'green')
     ax1.bar(hours, e_dis, align='edge', label = 'Battery discharge', color='red')  
 
-    ax1.set_xlabel('Hours')
-    ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
-    ax1.set_ylabel('Power [kW]')
-    ax1.legend(loc='upper left', ncol=2)
-    ax1.set_xlim(0,743)
+    ax1.set_xlabel('Days', fontsize=12, fontweight='bold', family='serif')
+    ax1.set_xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])  # Reducing ticks for better readability
+    ax1.set_ylabel('Power [kW]',fontsize=12, fontweight='bold', family='serif')
+    ax1.legend(loc='upper left', ncol=3, prop = {'weight': 'bold', 'family': 'serif'})
+    ax1.set_xlim(24*21, 24*28)
 
     ax2 = ax1.twinx() #Creates a second y-axis on the right
     ax2.step(hours, price, where = 'post', label = 'Spot price', color = 'tab:blue')
-    ax2.set_ylabel('Spot Price [NOK/kWh]')
-    ax2.legend(loc = 'upper right')
+    ax2.set_ylabel('Spot Price [NOK/kWh]',fontsize=12, fontweight='bold', family='serif')
+    ax2.legend(loc = 'upper right', prop = {'weight': 'bold', 'family': 'serif'})
     ax2.set_ylim([0, 7])
+
     fig.tight_layout()  # Adjust layout to prevent overlapping
-    plt.title('The Community Battery')
+    plt.title('The Community Battery', fontsize=18, fontweight='bold', family='serif')
 
 
 #a plot showcasing how the EV charging operates
     #plotting the EV "battery"
-    fig3, ax1 = plt.subplots()
+    fig3, ax1 = plt.subplots(figsize = (10,6))
     ax1.step(hours, EV_battery, where = 'post', label='EV flexibility potential', color='tab:green')
     ax1.bar(hours, EV_demand, align='edge', color ='tab:gray', label='Regular EV charging')
     ax1.bar(hours, e_EV_cha, align='edge', bottom = adjusted_EV_demand, label = 'Additional EV charging', color = 'green')
     ax1.bar(hours, e_EV_dis, align='edge', bottom = adjusted_EV_demand, label = 'Averted EV charging', color='red')  # Subtract discharge
     
-    ax1.set_xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
-    ax1.set_xticks(hours[::3])  # Reducing ticks for better readability
+    ax1.set_xlabel('Days', fontsize=12, fontweight='bold', family='serif')
+    ax1.set_xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
     ax1.legend(loc = 'upper left', ncol = 2, prop = {'weight': 'bold', 'family': 'serif'})
-    ax1.set_xlim(0,743)
+    ax1.set_xlim(24*21, 24*28)
 
     ax2 = ax1.twinx() #Creates a second y-axis on the right
     ax2.step(hours, price, where = 'post', label = 'Spot price', color = 'tab:blue')
     ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=12, fontweight='bold', family='serif')
     ax2.legend(loc = 'upper right', prop = {'weight': 'bold', 'family': 'serif'})
     ax2.set_ylim([0, 7])
+
     fig3.tight_layout()  # Adjust layout to prevent overlapping
     plt.title('Flexible EV charging', fontsize=18, fontweight='bold', family='serif')
     plt.show()
