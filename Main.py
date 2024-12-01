@@ -1,4 +1,7 @@
 import pyomo.environ as pyo
+import matplotlib .pyplot as plt
+import numpy as np
+from sklearn.linear_model import LinearRegression
 from Formulation import Solve, ModelSetUp, Initialize_Case
 from OutputData import Graphical_Results, Store_Results_In_File, Box_Plots
 from SpotPrice import SpotPrices
@@ -16,7 +19,14 @@ if __name__ == "__main__":
     what2run = input('\n\nDefine the case to be run: \n     Base Case: write "b" \n     Case 1: write "1"\n     Case 2: write "2"\n     Case 3: write "3"\nAnswer: ')
 
     #Gather input values to be used in "ModelSetUp" function:
-    case_dict = Initialize_Case(what2run)
+    case_dict = Initialize_Case(what2run) #decides what case to be run
+    # case_dict = {'flexible_EV_on': True,      #flexible EV charge not active
+    #             'battery_on': True,           #community BESS not active
+    #             'power_grid_tariff_on': True,  #grid tariff not active
+    #             'step_grid_tariff': True,      #stepwise grid tariff active
+    #             'IBDR_on': True,              #incentive base demand response not active
+    #             'hour_restricted': 508,
+    #             'power_restricted':10e6}
     SpotPrice = SpotPrices() # Gives the spot prices for NO3 for january 2024, hourly resolution
     EnergyTariff = GridTariffEnergy() # Gives the energy part of the grid tariff for NO3, hourly resolution
     PowerTariff = GridTariffPower() # Gives the power part of the grid tariff for NO3
@@ -39,12 +49,43 @@ if __name__ == "__main__":
 
     m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
     Solve(m) #Solvign the optimisation problem
-    #Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
-    #Graphical_Results(m) #Printing graphical results of values from optimisation values
+    # Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
+    Graphical_Results(m) #Printing graphical results of values from optimisation values
     print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
     print(f'Peak power imported during the month: {pyo.value(m.peak):.2f} kW')
     print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
     ENS = [m.ENS[t].value for t in m.T]
     if any(value != 0 for value in ENS):
         print('!! There is energy not supplied in the model!!')
-    #Box_Plots(m)
+    # Box_Plots(m)
+
+    # y_lim = np.linspace(9.1, 50, 40)
+    # obj_value = []
+
+    # for limit in y_lim:
+    #     case_dict['power_restricted'] = limit
+
+    #     m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
+    #     Solve(m)
+
+    #     obj_value.append(pyo.value(m.Obj))
+
+
+    # print(obj_value)
+    # plt.step(y_lim, obj_value)
+    # plt.show()
+
+    # #linear regression
+    # x = y_lim
+    # y = obj_value
+    # log_y = np.log(y)
+    # x_reshaped = x.reshape(-1,1)
+    # model = LinearRegression()
+    # model.fit(x_reshaped, log_y)
+    # b = model.coef_[0]
+    # log_a = model.intercept_
+    # a = np.exp(log_a)
+    # print(f"Exponential Model: y = {a:.3f} * e^({b:.3f} * x)")
+
+
+

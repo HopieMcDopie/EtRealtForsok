@@ -81,8 +81,6 @@ def Graphical_Results(m): #Function to plot results
     ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand, label = 'Avoided EV charging', color = 'darkred')
     ax1.bar(hours, e_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_dis, label = 'BESS discharging', color = 'orangered')
     
-    
-
     # Format primary y-axis
     ax1.set_xlabel('Days',fontsize=14, fontweight='bold', family='serif')
     ax1.set_xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])  # Reducing ticks for better readability
