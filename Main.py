@@ -16,7 +16,7 @@ if __name__ == "__main__":
     what2run = input('\n\nDefine the case to be run: \n     Base Case: write "b" \n     Case 1: write "1"\n     Case 2: write "2"\n     Case 3: write "3"\nAnswer: ')
 
     #Gather input values to be used in "ModelSetUp" function:
-    flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff, IBDR_on = Initialize_Case(what2run)
+    case_dict = Initialize_Case(what2run)
     SpotPrice = SpotPrices() # Gives the spot prices for NO3 for january 2024, hourly resolution
     EnergyTariff = GridTariffEnergy() # Gives the energy part of the grid tariff for NO3, hourly resolution
     PowerTariff = GridTariffPower() # Gives the power part of the grid tariff for NO3
@@ -37,14 +37,14 @@ if __name__ == "__main__":
     flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh
                   'Flexible': 0.3} # %
 
-    m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff, IBDR_on)
+    m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
     Solve(m) #Solvign the optimisation problem
-    Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
-    Graphical_Results(m) #Printing graphical results of values from optimisation values
+    #Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
+    #Graphical_Results(m) #Printing graphical results of values from optimisation values
     print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
     print(f'Peak power imported during the month: {pyo.value(m.peak):.2f} kW')
     print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
     ENS = [m.ENS[t].value for t in m.T]
     if any(value != 0 for value in ENS):
         print('!! There is energy not supplied in the model!!')
-    Box_Plots(m)
+    #Box_Plots(m)

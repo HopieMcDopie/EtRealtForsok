@@ -202,17 +202,41 @@ def Box_Plots(m):
 
     #lager 31 lister med 24 verdier
     y_split = [list(y)[i:i+24] for i in range(0, len(y), 24)]
+    y_EV_split = [list(y_EV)[i:i+24] for i in range(0, len(y), 24)]
+    e_cha_split = [list(e_cha)[i:i+24] for i in range(0, len(e_cha), 24)]
     
     #transponerer den slik at vi får 24 lister med 31 verdier
     y_transposed = zip(*y_split)
+    y_EV_transposed = zip(*y_EV_split)
+    e_cha_transposed = zip(*e_cha_split)
     y_box = list(y_transposed)
+    y_EV_box = list(y_EV_transposed)
+    e_cha_box = list(e_cha_transposed)
+
+    # plt.figure(figsize = (10,6))
+    # plt.boxplot(y_box)
+    # plt.xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
+    # plt.ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    # plt.ylim(0, 100)
+    # plt.title('Grid import', fontsize=18, fontweight='bold', family='serif')
+    # plt.tight_layout()
+    
+
+    # plt.figure(figsize = (10,6))
+    # plt.boxplot(y_EV_box)
+    # plt.xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
+    # plt.ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    # plt.ylim(0, 35)
+    # plt.title('EV charging', fontsize=18, fontweight='bold', family='serif')
+    # plt.tight_layout()
+    # plt.show()
 
     plt.figure(figsize = (10,6))
-    plt.boxplot(y_box)
+    plt.boxplot(e_cha_box)
     plt.xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
     plt.ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
-    plt.ylim(0, 100)
-    plt.title('Grid import', fontsize=18, fontweight='bold', family='serif')
+    plt.ylim(0, 35)
+    plt.title('BESS charging', fontsize=18, fontweight='bold', family='serif')
     plt.tight_layout()
     plt.show()
 

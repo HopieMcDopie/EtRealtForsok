@@ -5,40 +5,40 @@ from pyomo.opt import SolverFactory
 
 #"""Initialize the case based on user input."""
 def Initialize_Case(what2run):
+    case_dict = {'flexible_EV_on': False,      #flexible EV charge not active
+                'battery_on': False,           #community BESS not active
+                'power_grid_tariff_on': True,  #grid tariff not active
+                'step_grid_tariff': True,      #stepwise grid tariff active
+                'IBDR_on': False,              #incentive base demand response not active
+                'hour_resticted': 0,
+                'power_restricted':10e6}             
+
     if what2run == "b": #Base case
-        flexible_EV_on = False       #flexible EV charge not active
-        battery_on = False           #community BESS not active
-        power_grid_tariff_on = True  #grid tariff not active
-        step_grid_tariff = True      #stepwise grid tariff active
-        IBDR_on = False            #PBDR not active
-    elif what2run == "1": #Case 1
-        flexible_EV_on = True        #flexible EV charge active
-        battery_on = True            #community BESS active
-        power_grid_tariff_on = False #grid tariff not active
-        step_grid_tariff = False     #if False the linear model will be included!
-        IBDR_on = False            #PBDR not active
-    elif what2run == "2": #Case 2
-        flexible_EV_on = True        #flexible EV charge active
-        battery_on = True            #community BESS active
-        power_grid_tariff_on = True  #grid tariff active
-        step_grid_tariff = True      #stepwise grid tariff active'
-        IBDR_on = False            #PBDR not active
-    elif what2run == "3": #Case 3
-        flexible_EV_on = True        #flexible EV charge active
-        battery_on = True            #community BESS active
-        power_grid_tariff_on = True  #grid tariff active
-        step_grid_tariff = True      #stepwise grid tariff active
-        IBDR_on = True              #PBDR  active    
+        return case_dict
+    
+    elif what2run == "1": #Case 1 - turning on the flexible resources and off the grid tariff
+        case_dict['flexible_EV_on'] = True
+        case_dict['battery_on'] = True
+        case_dict['power_grid_tariff_on'] = False
+        return case_dict
+    
+    elif what2run == "2": #Case 2 - turning on the flexible resources
+        case_dict['flexible_EV_on'] = True
+        case_dict['battery_on'] = True
+        return case_dict
+
+    elif what2run == "3": #Case 3 - turning on the flexible resources and the IBDR
+        case_dict['flexible_EV_on'] = True
+        case_dict['battery_on'] = True
+        case_dict['IBDR_on']  = True
+        case_dict['hour_restricted'] = int(input('\nWhat hour should y_imp be restricted?\n    Answer: '))            
+        case_dict['power_restricted'] = int(input('\nHow many kW should y_imp be restricted to?\n    Answer: '))
+        return case_dict
+  
     else:
         print('*****\n---The input was not correct. Pull yourself together----\n---Running Base case---\n*****')
-        what2run = "b" #indicate base case
-        flexible_EV_on = False
-        battery_on = False
-        power_grid_tariff_on = True
-        step_grid_tariff = True
-        IBDR_on = False            #PBDR not active
+        return case_dict
 
-    return flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff, IBDR_on
 
 
 
@@ -154,7 +154,7 @@ def DischargeCap_EV(m, t):
 
 #______________________________________#
 # The set up of the optimization problem
-def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, flexible_EV_on, battery_on, power_grid_tariff_on, step_grid_tariff, IBDR_on): 
+def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict): 
     #Instance
     m = pyo.ConcreteModel()
 
@@ -170,7 +170,7 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.D                   = pyo.Param(m.T, initialize = Demand)                                         # aggregated household demand [kWh]
     m.D_EV                = pyo.Param(m.T, initialize = EV_data['Charging'])                            # aggregated EV demand [kWh]
     m.SoC0                = pyo.Param(     initialize = batt_const['Initial State of Charge'])          # initial state of charge of the battery [kWh]
-    if battery_on:
+    if case_dict['battery_on']:
         m.BatteryCap      = pyo.Param(initialize = batt_const['Battery energy capacity'])               # max battery energy capacity [kWh]
     else:
         m.BatteryCap      = pyo.Param(initialize = 0)                                                   # max battery energy capacity [kWh]
@@ -178,16 +178,14 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.BatteryDischargeCap = pyo.Param(initialize = batt_const['Dishcharge capacity'])                   # disharging speed/battery power capacity [kW]
     m.eta_cha             = pyo.Param(initialize = batt_const['eta_cha'])                               # efficiency of charge
     m.eta_dis             = pyo.Param(initialize = batt_const['eta_dis'])                               # efficiency of discharge
-    if flexible_EV_on:
+    if case_dict['flexible_EV_on']:
         m.EV_BatEnergyCap = pyo.Param(initialize = flex_const['Monthly energy']*flex_const['Flexible']) # amount of flexible EV load
     else:
         m.EV_BatEnergyCap = pyo.Param(initialize = 0)                                                   # amount of flexible EV load
     m.EV_BatteryPowerCap  = pyo.Param(m.T, initialize = EV_data['Available'])                           # available capacity in the grid
-    m.grid_stop           = pyo.Var(m.T, initialize = 1000000, within = pyo.NonNegativeReals)           # limiting y_imp < 10^6, to be used with IBDR
-    if IBDR_on:
-        hour_restricted   = int(input('\nWhat hour should y_imp be restricted?\n    Answer: '))            
-        power_restricted  = int(input('\nHow many kW should y_imp be restricted to?\n    Answer: '))
-        m.grid_stop[hour_restricted].fix(power_restricted)                                               #restrict based on input values
+    m.grid_stop           = pyo.Var(m.T, initialize = 10e6, within = pyo.NonNegativeReals)              # limiting y_imp < 10^6, to be used with IBDR
+    if case_dict['IBDR_on']:
+        m.grid_stop[case_dict['hour_restricted']].fix(case_dict['power_restricted'])                    #restrict based on input values
 
 
     #Creating the list of the grid tariff break-points and respective costs
@@ -214,9 +212,9 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     m.e_EV_cha      = pyo.Var(m.T, within = pyo.NonNegativeReals) # flexibility activated [kW]
     m.e_EV_dis      = pyo.Var(m.T, within = pyo.NonNegativeReals) # result of activated flexibility [kW]
 
-    if power_grid_tariff_on:
+    if case_dict['power_grid_tariff_on']:
         m.C_grid_power  = pyo.Var(within = pyo.NonNegativeReals)      # cost of power consumption [NOK]
-        if step_grid_tariff:
+        if case_dict['step_grid_tariff']:
             m.peak                  = pyo.Var(within = pyo.NonNegativeReals)      # peak power consumed during th month [kW]
             m.z                     = pyo.Var(m.I, within = pyo.Binary)           # binary variable that selects price-backet of power grid tariff
             m.SingleSegment         = pyo.Constraint(rule = SignleSegment) 
@@ -248,7 +246,7 @@ def ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const
     
 
     #Objective function
-    if power_grid_tariff_on:
+    if case_dict['power_grid_tariff_on']:
         m.Obj = pyo.Objective(rule = Obj_with_power_grid_tariff, sense = pyo.minimize)
     else:
         m.Obj = pyo.Objective(rule = Obj_without_power_grid_tariff, sense = pyo.minimize)
