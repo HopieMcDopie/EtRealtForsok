@@ -60,7 +60,7 @@ def Graphical_Results(m): #Function to plot results
     ENS = np.array([m.ENS[t].value for t in m.T])
  
     adjusted_demand = np.array([(d - e) for d, e in zip(demand, e_dis)]) #each element is the result of subtracting e_dis from demand.
-    adjusted_EV_demand = np.array([(d - e) for d, e in zip(EV_demand, e_EV_dis)]) #each element is the result of subtracting e_dis from demand.
+    adjusted_EV_demand = np.array([(d - e) for d, e in zip(EV_demand, e_EV_dis)]) #each element is the result of subtracting e_EV_dis from demand.
 
     print('Actual peak power: ', max(y))
     print('ENS: ', max(ENS))
@@ -86,15 +86,15 @@ def Graphical_Results(m): #Function to plot results
     ax1.set_xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]',fontsize=14, fontweight='bold', family='serif')
     ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif'})
-    ax1.set_xlim(24*21, 24*22)
-    ax1.set_ylim(0, 85)
+    ax1.set_xlim(24*27, 24*29)
+    ax1.set_ylim(0, 95)
 
     # Adding the secondary y-axis for Spotprice
     ax2 = ax1.twinx()
     ax2.step(hours, price, where = 'post', label='Spot price', color='tab:blue', linewidth = 2)
     ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=14, fontweight='bold', family='serif')
     ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif'})
-    ax2.set_ylim([0, 0.7])
+    ax2.set_ylim([0, 1])
 
     # Adding a title and adjusting layout
     plt.title('Grid import and distribution', fontsize=18, fontweight='bold', family='serif')
@@ -113,13 +113,14 @@ def Graphical_Results(m): #Function to plot results
     ax1.set_xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]',fontsize=14, fontweight='bold', family='serif')
     ax1.legend(loc='upper left', ncol=3, prop = {'weight': 'bold', 'family': 'serif'})
-    ax1.set_xlim(24*21, 24*28)
+    ax1.set_xlim(24*27, 24*29)
+    ax1.set_ylim(0,90)
 
     ax2 = ax1.twinx() #Creates a second y-axis on the right
     ax2.step(hours, price, where = 'post', label = 'Spot price', color = 'tab:blue')
     ax2.set_ylabel('Spot Price [NOK/kWh]',fontsize=14, fontweight='bold', family='serif')
     ax2.legend(loc = 'upper right', prop = {'weight': 'bold', 'family': 'serif'})
-    ax2.set_ylim([0, 7])
+    ax2.set_ylim([0, 1])
 
     plt.title('The Community Battery', fontsize=18, fontweight='bold', family='serif')
     fig2.tight_layout()  # Adjust layout to prevent overlapping
@@ -137,35 +138,75 @@ def Graphical_Results(m): #Function to plot results
     ax1.set_xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
     ax1.legend(loc = 'upper left', ncol = 2, prop = {'weight': 'bold', 'family': 'serif'})
-    ax1.set_xlim(24*21, 24*28)
-    ax1.set_ylim(0,10)
+    ax1.set_xlim(24*27, 24*29)
+    ax1.set_ylim(0,110)
 
     ax2 = ax1.twinx() #Creates a second y-axis on the right
     ax2.step(hours, price, where = 'post', label = 'Spot price', color = 'tab:blue')
     ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=14, fontweight='bold', family='serif')
     ax2.legend(loc = 'upper right', prop = {'weight': 'bold', 'family': 'serif'})
-    ax2.set_ylim([0, 7])
+    ax2.set_ylim([0, 1])
     
     plt.title('Flexible EV charging', fontsize=18, fontweight='bold', family='serif')
     fig3.tight_layout()  # Adjust layout to prevent overlapping
     plt.show()
 
-def Comparing_plots(base_case_file, compare_case_file):
+def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, compare_3_case_file):
+
+    hours = [i for i in range(0,24)]
 
     base_case = pd.read_excel(base_case_file)
     compare_case = pd.read_excel(compare_case_file)
-    
-    
+    compare_2_case = pd.read_excel(compare_2_case_file)
+    compare_3_case = pd.read_excel(compare_3_case_file)
 
-    fig, ax1 = plt.subplots()
-    ax1.plot(base_case['Power Import [kW]'], color = 'tab:red', linestyle = '--')
-    ax1.plot(compare_case['Power Import [kW]'],  color = 'tab:red')
-    ax1.set_xlim(24*21, 24*22)
-    ax1.set_ylim(15,80)
-    ax2 = ax1.twinx()
-    ax2.plot(base_case['Price [NOK/kWh]'], linestyle = '--')
-    ax2.set_ylim(0,0.6)
+    base_daily = [list(base_case['Power Import [kW]'])[i:i+24] for i in range(0, len(base_case['Power Import [kW]']), 24)]
+    base_transposed = zip(*base_daily)
+    base_hourly = list(base_transposed)
+    base_hourly_mean = np.array([sum(base_hourly[i]) for i in range(len(base_hourly))])/len(base_hourly)
+    base_hourly_mean = list(base_hourly_mean)
+
+    case_daily = [list(compare_case['Power Import [kW]'])[i:i+24] for i in range(0, len(compare_case['Power Import [kW]']), 24)]
+    case_transposed = zip(*case_daily)
+    case_hourly = list(case_transposed)
+    case_hourly_mean = np.array([sum(case_hourly[i]) for i in range(len(case_hourly))])/len(case_hourly)
+
+    case_2_daily = [list(compare_2_case['Power Import [kW]'])[i:i+24] for i in range(0, len(compare_2_case['Power Import [kW]']), 24)]
+    case_2_transposed = zip(*case_2_daily)
+    case_2_hourly = list(case_2_transposed)
+    case_2_hourly_mean = np.array([sum(case_2_hourly[i]) for i in range(len(case_2_hourly))])/len(case_2_hourly)
+
+    case_3_daily = [list(compare_3_case['Power Import [kW]'])[i:i+24] for i in range(0, len(compare_3_case['Power Import [kW]']), 24)]
+    case_3_transposed = zip(*case_3_daily)
+    case_3_hourly = list(case_3_transposed)
+    case_3_hourly_mean = np.array([sum(case_3_hourly[i]) for i in range(len(case_3_hourly))])/len(case_3_hourly)
+
+    price_daily = [list(base_case['Price [NOK/kWh]'])[i:i+24] for i in range(0, len(base_case['Price [NOK/kWh]']), 24)]
+    price_transposed = zip(*price_daily)
+    price_hourly = list(price_transposed)
+    price_hourly_mean = np.array([sum(price_hourly[i]) for i in range(len(price_hourly))])/len(price_hourly)
+
+    plt.rc('xtick', labelsize=10)  # X-tick customization
+    plt.rc('ytick', labelsize=10)  # Y-tick customization
+    plt.rc('font', family='serif') # Change font family globally
     
+    fig, ax1 = plt.subplots(figsize = (10,6))
+    ax1.step(hours, base_hourly_mean, color = 'tab:red', label = 'base case')
+    ax1.step(hours, case_hourly_mean,  color = 'tab:green', label = 'case 1')
+    ax1.step(hours, case_2_hourly_mean,  color = 'tab:orange', label = 'case 2')
+    ax1.step(hours, case_3_hourly_mean,  color = 'tab:purple', label = 'case 3')
+    ax1.set_xlim(0,23)
+    ax1.set_xticks(hours)
+    ax1.set_xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
+    ax1.set_ylim(40,85)
+    ax1.set_ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    ax1.legend(loc = 'upper left', ncol = 2, prop = {'weight': 'bold', 'family': 'serif'})
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Price [NOK/kWh)]', fontsize=14, fontweight='bold', family='serif')
+    ax2.step(hours, price_hourly_mean, linestyle = '--', label = 'spot price')
+    ax2.legend(loc = 'upper right', ncol = 1, prop = {'weight': 'bold', 'family': 'serif'})
+    plt.title('Average hourly grid import and average spot price', fontsize=18, fontweight='bold', family='serif')
+    fig.tight_layout()
     plt.show()
 
     return
@@ -211,23 +252,21 @@ def Box_Plots(m):
     y_EV_box = list(y_EV_transposed)
     e_cha_box = list(e_cha_transposed)
 
-    # plt.figure(figsize = (10,6))
-    # plt.boxplot(y_box)
-    # plt.xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
-    # plt.ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
-    # plt.ylim(0, 100)
-    # plt.title('Grid import', fontsize=18, fontweight='bold', family='serif')
-    # plt.tight_layout()
+    plt.figure(figsize = (10,6))
+    plt.boxplot(y_box)
+    plt.xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
+    plt.ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    plt.ylim(0, 100)
+    plt.title('Grid import', fontsize=18, fontweight='bold', family='serif')
+    plt.tight_layout()
     
-
-    # plt.figure(figsize = (10,6))
-    # plt.boxplot(y_EV_box)
-    # plt.xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
-    # plt.ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
-    # plt.ylim(0, 35)
-    # plt.title('EV charging', fontsize=18, fontweight='bold', family='serif')
-    # plt.tight_layout()
-    # plt.show()
+    plt.figure(figsize = (10,6))
+    plt.boxplot(y_EV_box)
+    plt.xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
+    plt.ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    plt.ylim(0, 35)
+    plt.title('EV charging', fontsize=18, fontweight='bold', family='serif')
+    plt.tight_layout()
 
     plt.figure(figsize = (10,6))
     plt.boxplot(e_cha_box)
@@ -243,4 +282,4 @@ def Box_Plots(m):
 
 if __name__ == '__main__':
 
-    Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx')
+    Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
