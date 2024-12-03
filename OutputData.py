@@ -1,7 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.linear_model import LinearRegression
 import pyomo.environ as pyo
+from Formulation import ModelSetUp, Solve
 
 
 
@@ -43,7 +45,6 @@ def Store_Results_In_File(m, what2run): #Storing model output values to an excel
     results_df.to_excel(file_name, index = False)
     return ()
 
-
 def Graphical_Results(m): #Function to plot results
     hours = list(m.T)
     price = np.array([m.C_spot[t] for t in m.T])
@@ -61,9 +62,6 @@ def Graphical_Results(m): #Function to plot results
  
     adjusted_demand = np.array([(d - e) for d, e in zip(demand, e_dis)]) #each element is the result of subtracting e_dis from demand.
     adjusted_EV_demand = np.array([(d - e) for d, e in zip(EV_demand, e_EV_dis)]) #each element is the result of subtracting e_EV_dis from demand.
-
-    print('Actual peak power: ', max(y))
-    print('ENS: ', max(ENS))
 
     plt.rc('xtick', labelsize=10)  # X-tick customization
     plt.rc('ytick', labelsize=10)  # Y-tick customization
@@ -211,7 +209,6 @@ def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, comp
 
     return
 
-
 def Box_Plots(m):
     """Se hvordan import flyttes med flexibilitet 
     
@@ -279,6 +276,52 @@ def Box_Plots(m):
 
     return    
 
+def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const):
+    case_dict = {'flexible_EV_on': True,      #flexible EV charge not active
+                'battery_on': True,           #community BESS not active
+                'power_grid_tariff_on': True,  #grid tariff not active
+                'step_grid_tariff': True,      #stepwise grid tariff active
+                'IBDR_on': True,              #incentive base demand response not active
+                'hour_restricted': 674,
+                'power_restricted': 10e6}
+        
+    y_lim = np.linspace(9, 80, 30)
+    obj_value = []
+
+    for limit in y_lim:
+        case_dict['power_restricted'] = limit
+
+        m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
+        Solve(m)
+
+        obj_value.append(pyo.value(m.Obj))
+
+    plt.step(y_lim, obj_value)
+    plt.show()
+    
+    #linear regression
+    x = y_lim
+    y = obj_value
+    log_y = np.log(y)
+    x_reshaped = x.reshape(-1,1)
+    model = LinearRegression()
+    model.fit(x_reshaped, log_y)
+    b = model.coef_[0]
+    log_a = model.intercept_
+    a = np.exp(log_a)
+    print(f"Exponential Model: y = {a:.3f} * e^({b:.3f} * x)")
+
+    print(obj_value)
+    obj_value_reversed = obj_value[::-1]
+    print(obj_value_reversed)
+    delta_obj_value = [0]
+    for i in range(1, len(obj_value_reversed)):
+        delta_obj_value.append(obj_value_reversed[i]-obj_value_reversed[i-1])
+    print(delta_obj_value)
+
+    y_lim_reversed = y_lim[::-1]
+    plt.step(y_lim_reversed, delta_obj_value)
+    plt.show()
 
 if __name__ == '__main__':
 

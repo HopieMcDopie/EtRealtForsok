@@ -1,9 +1,7 @@
 import pyomo.environ as pyo
 import matplotlib .pyplot as plt
-import numpy as np
-from sklearn.linear_model import LinearRegression
 from Formulation import Solve, ModelSetUp, Initialize_Case
-from OutputData import Graphical_Results, Store_Results_In_File, Box_Plots
+from OutputData import Graphical_Results, Store_Results_In_File, Box_Plots, Cost_Of_Flex
 from SpotPrice import SpotPrices
 from GridTariff import GridTariffEnergy, GridTariffPower
 from EVData import ReadEVData, FindMonthlyChargeEnergy
@@ -20,13 +18,6 @@ if __name__ == "__main__":
 
     #Gather input values to be used in "ModelSetUp" function:
     case_dict = Initialize_Case(what2run) #decides what case to be run
-    # case_dict = {'flexible_EV_on': True,      #flexible EV charge not active
-    #             'battery_on': True,           #community BESS not active
-    #             'power_grid_tariff_on': True,  #grid tariff not active
-    #             'step_grid_tariff': True,      #stepwise grid tariff active
-    #             'IBDR_on': True,              #incentive base demand response not active
-    #             'hour_restricted': 674,
-    #             'power_restricted': 0}
     SpotPrice = SpotPrices() # Gives the spot prices for NO3 for january 2024, hourly resolution
     EnergyTariff = GridTariffEnergy() # Gives the energy part of the grid tariff for NO3, hourly resolution
     PowerTariff = GridTariffPower() # Gives the power part of the grid tariff for NO3
@@ -47,54 +38,25 @@ if __name__ == "__main__":
     flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh
                   'Flexible': 0.3} # %
 
-    m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
-    Solve(m) #Solvign the optimisation problem
-    #Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
-    Graphical_Results(m) #Printing graphical results of values from optimisation values
-    print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
-    print(f'Peak power imported during the month: {pyo.value(m.peak):.2f} kW')
-    print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
-    ENS = [m.ENS[t].value for t in m.T]
-    if any(value != 0 for value in ENS):
-        print('!! There is energy not supplied in the model!!')
-    Box_Plots(m)
+    #Setting up and solving the model
+    # m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict) #Setting up the optimization model
+    # Solve(m) #Solvign the optimisation problem
 
-    # y_lim = np.linspace(9, 80, 30)
-    # obj_value = []
+    #Support functions to store and present data
+    # Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
+    # Graphical_Results(m) #Printing graphical results of values from optimisation values
+    # Box_Plots(m)
 
-    # for limit in y_lim:
-    #     case_dict['power_restricted'] = limit
-
-    #     m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
-    #     Solve(m)
-
-    #     obj_value.append(pyo.value(m.Obj))
-
-    # plt.step(y_lim, obj_value)
-    # plt.show()
+    #Prints
+    # print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
+    # y_peak = [m.y_imp[t].value for t in m.T]
+    # print(f'Peak power imported during the month: {max(y_peak):.2f} kW')
+    # print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
+    # ENS = [m.ENS[t].value for t in m.T]
+    # if any(value != 0 for value in ENS):
+    #     print(f'!! There is {max(ENS):.2f} kWh energy not supplied in the model!!')
     
-    # #linear regression
-    # x = y_lim
-    # y = obj_value
-    # log_y = np.log(y)
-    # x_reshaped = x.reshape(-1,1)
-    # model = LinearRegression()
-    # model.fit(x_reshaped, log_y)
-    # b = model.coef_[0]
-    # log_a = model.intercept_
-    # a = np.exp(log_a)
-    # print(f"Exponential Model: y = {a:.3f} * e^({b:.3f} * x)")
 
-    # print(obj_value)
-    # obj_value_reversed = obj_value[::-1]
-    # print(obj_value_reversed)
-    # delta_obj_value = [0]
-    # for i in range(1, len(obj_value_reversed)):
-    #     delta_obj_value.append(obj_value_reversed[i]-obj_value_reversed[i-1])
-    # print(delta_obj_value)
-
-    # y_lim_reversed = y_lim[::-1]
-    # plt.step(y_lim_reversed, delta_obj_value)
-    # plt.show()
+    Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
 
 
