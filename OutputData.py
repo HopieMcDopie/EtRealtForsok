@@ -277,6 +277,7 @@ def Box_Plots(m):
     return    
 
 def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const):
+    #setter case 3 som standard, setter fast timen for IBDR men ikke begrensingen
     case_dict = {'flexible_EV_on': True,      #flexible EV charge not active
                 'battery_on': True,           #community BESS not active
                 'power_grid_tariff_on': True,  #grid tariff not active
@@ -284,44 +285,46 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
                 'IBDR_on': True,              #incentive base demand response not active
                 'hour_restricted': 674,
                 'power_restricted': 10e6}
-        
-    y_lim = np.linspace(9, 80, 30)
+    
+    #setter hva importen skal begrens til     
+    y_lim = np.linspace(0.2, 73.2, 74)
+    y_lim = y_lim[::-1]
+    print(y_lim)
+
     obj_value = []
 
     for limit in y_lim:
         case_dict['power_restricted'] = limit
-
         m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
         Solve(m)
-
         obj_value.append(pyo.value(m.Obj))
 
+    plt.rc('xtick', labelsize=10) 
+    plt.rc('ytick', labelsize=10) 
+    plt.rc('font', family='serif') 
+    plt.figure(figsize = (10,6))
+    plt.axvline(x = 10.2, linestyle = '--', color = 'k')
     plt.step(y_lim, obj_value)
+    plt.xlabel('Grid Import Allowed [kW]', fontsize = 14, fontweight='bold')
+    plt.xlim(10,73)
+    plt.xticks([i for i in range(0,75,5)])
+    plt.ylabel('Total Costs [ NOK]', fontsize = 14, fontweight='bold')
+    plt.title('Cost of Flexibility', fontsize = 18, fontweight='bold')
+    plt.tight_layout()
     plt.show()
     
-    #linear regression
-    x = y_lim
-    y = obj_value
-    log_y = np.log(y)
-    x_reshaped = x.reshape(-1,1)
-    model = LinearRegression()
-    model.fit(x_reshaped, log_y)
-    b = model.coef_[0]
-    log_a = model.intercept_
-    a = np.exp(log_a)
-    print(f"Exponential Model: y = {a:.3f} * e^({b:.3f} * x)")
+    # #linear regression
+    # x = y_lim
+    # y = obj_value
+    # log_y = np.log(y)
+    # x_reshaped = x.reshape(-1,1)
+    # model = LinearRegression()
+    # model.fit(x_reshaped, log_y)
+    # b = model.coef_[0]
+    # log_a = model.intercept_
+    # a = np.exp(log_a)
+    # print(f"Exponential Model: y = {a:.3f} * e^({b:.3f} * x)")
 
-    print(obj_value)
-    obj_value_reversed = obj_value[::-1]
-    print(obj_value_reversed)
-    delta_obj_value = [0]
-    for i in range(1, len(obj_value_reversed)):
-        delta_obj_value.append(obj_value_reversed[i]-obj_value_reversed[i-1])
-    print(delta_obj_value)
-
-    y_lim_reversed = y_lim[::-1]
-    plt.step(y_lim_reversed, delta_obj_value)
-    plt.show()
 
 if __name__ == '__main__':
 

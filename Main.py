@@ -8,16 +8,16 @@ from EVData import ReadEVData, FindMonthlyChargeEnergy
 from ConsumptionData import ReadCSVDemandFile
 
 """
-__________________________________________
-#### THE OPTIMISATION MODEL IS RUN HERE###
-¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
+________________________________________________
+#### THE OPTIMISATION MODEL IS RUN FROM HERE###
+¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 """
 if __name__ == "__main__":
-    #User imput to define the scenarios
-    what2run = input('\n\nDefine the case to be run: \n     Base Case: write "b" \n     Case 1: write "1"\n     Case 2: write "2"\n     Case 3: write "3"\nAnswer: ')
+    #User imput to define the scenarios    
+    # what2run = input('\n\nDefine the case to be run: \n     Base Case: write "b" \n     Case 1: write "1"\n     Case 2: write "2"\n     Case 3: write "3"\nAnswer: ')
 
     #Gather input values to be used in "ModelSetUp" function:
-    case_dict = Initialize_Case(what2run) #decides what case to be run
+    # case_dict = Initialize_Case(what2run) #decides what case to be run
     SpotPrice = SpotPrices() # Gives the spot prices for NO3 for january 2024, hourly resolution
     EnergyTariff = GridTariffEnergy() # Gives the energy part of the grid tariff for NO3, hourly resolution
     PowerTariff = GridTariffPower() # Gives the power part of the grid tariff for NO3
@@ -41,6 +41,13 @@ if __name__ == "__main__":
     #Setting up and solving the model
     # m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict) #Setting up the optimization model
     # Solve(m) #Solvign the optimisation problem
+
+    #Getting data for the hour of IBDR
+    # print(pyo.value(m.D[674]))
+    # print(pyo.value(m.e_cha[674]))
+    # print(pyo.value(m.D_EV[674]))
+    # print(pyo.value(m.e_EV_cha[674]))
+    # print(pyo.value(m.y_imp[674]))
 
     #Support functions to store and present data
     # Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
