@@ -32,7 +32,7 @@ def Initialize_Case(what2run):
         case_dict['battery_on'] = True
         case_dict['IBDR_on']  = True
         case_dict['hour_restricted'] = int(input('\nWhat hour should y_imp be restricted?\n    Answer: '))            
-        case_dict['power_restricted'] = int(input('\nHow many kW should y_imp be restricted to?\n    Answer: '))
+        case_dict['power_restricted'] = float(input('\nHow many kW should y_imp be restricted to?\n    Answer: '))
         return case_dict
   
     else:

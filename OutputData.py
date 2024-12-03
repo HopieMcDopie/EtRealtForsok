@@ -67,6 +67,14 @@ def Graphical_Results(m): #Function to plot results
     plt.rc('ytick', labelsize=10)  # Y-tick customization
     plt.rc('font', family='serif') # Change font family globally
 
+    days = [i for i in range(1,32)]
+    days_str = []
+    for day in days:
+        if day < 10:
+            days_str.append('0' + str(day) + '.01')
+        else:
+            days_str.append(str(day) + '.01')
+
 #a plot showcasing where the energy import is coming from
     #Stacked bar plot
     fig, ax1 = plt.subplots(figsize = (10,6))
@@ -81,7 +89,7 @@ def Graphical_Results(m): #Function to plot results
     
     # Format primary y-axis
     ax1.set_xlabel('Days',fontsize=14, fontweight='bold', family='serif')
-    ax1.set_xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])  # Reducing ticks for better readability
+    ax1.set_xticks([i for i in range(0,744,24)], [f'{day}' for day in days_str])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]',fontsize=14, fontweight='bold', family='serif')
     ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif'})
     ax1.set_xlim(24*27, 24*29)
@@ -108,7 +116,7 @@ def Graphical_Results(m): #Function to plot results
     ax1.bar(hours, e_dis, align='edge', label = 'Battery discharge', color='red')  
 
     ax1.set_xlabel('Days', fontsize=14, fontweight='bold', family='serif')
-    ax1.set_xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])  # Reducing ticks for better readability
+    ax1.set_xticks([i for i in range(0,744,24)], [f'{day}' for day in days_str])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]',fontsize=14, fontweight='bold', family='serif')
     ax1.legend(loc='upper left', ncol=3, prop = {'weight': 'bold', 'family': 'serif'})
     ax1.set_xlim(24*27, 24*29)
@@ -133,7 +141,7 @@ def Graphical_Results(m): #Function to plot results
     ax1.bar(hours, e_EV_dis, align='edge', bottom = adjusted_EV_demand, label = 'Averted EV charging', color='red')  # Subtract discharge
     
     ax1.set_xlabel('Days', fontsize=14, fontweight='bold', family='serif')
-    ax1.set_xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])  # Reducing ticks for better readability
+    ax1.set_xticks([i for i in range(0,744,24)], [f'{day}' for day in days_str])  # Reducing ticks for better readability
     ax1.set_ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
     ax1.legend(loc = 'upper left', ncol = 2, prop = {'weight': 'bold', 'family': 'serif'})
     ax1.set_xlim(24*27, 24*29)
