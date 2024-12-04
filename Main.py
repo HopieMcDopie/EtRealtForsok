@@ -14,10 +14,10 @@ ________________________________________________
 """
 if __name__ == "__main__":
     #User imput to define the scenarios    
-    # what2run = input('\n\nDefine the case to be run: \n     Base Case: write "b" \n     Case 1: write "1"\n     Case 2: write "2"\n     Case 3: write "3"\nAnswer: ')
+    what2run = input('\n\nDefine the case to be run: \n     Base Case: write "b" \n     Case 1: write "1"\n     Case 2: write "2"\n     Case 3: write "3"\nAnswer: ')
 
     #Gather input values to be used in "ModelSetUp" function:
-    # case_dict = Initialize_Case(what2run) #decides what case to be run
+    case_dict = Initialize_Case(what2run) #decides what case to be run
     SpotPrice = SpotPrices() # Gives the spot prices for NO3 for january 2024, hourly resolution
     EnergyTariff = GridTariffEnergy() # Gives the energy part of the grid tariff for NO3, hourly resolution
     PowerTariff = GridTariffPower() # Gives the power part of the grid tariff for NO3
@@ -39,8 +39,8 @@ if __name__ == "__main__":
                   'Flexible': 0.3} # %
 
     #Setting up and solving the model
-    # m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict) #Setting up the optimization model
-    # Solve(m) #Solvign the optimisation problem
+    m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict) #Setting up the optimization model
+    Solve(m) #Solvign the optimisation problem
 
     #Getting data for the hour of IBDR
     # print(pyo.value(m.D[674]))
@@ -51,19 +51,19 @@ if __name__ == "__main__":
 
     #Support functions to store and present data
     # Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
-    #Graphical_Results(m) #Printing graphical results of values from optimisation values
-    # Box_Plots(m)
+    Graphical_Results(m) #Printing graphical results of values from optimisation values
+    #Box_Plots(m)
 
     #Prints
-    # print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
-    # y_peak = [m.y_imp[t].value for t in m.T]
-    # print(f'Peak power imported during the month: {max(y_peak):.2f} kW')
-    # print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
-    # ENS = [m.ENS[t].value for t in m.T]
-    # if any(value != 0 for value in ENS):
-    #     print(f'!! There is {max(ENS):.5f} kWh energy not supplied in the model!!')
+    print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
+    y_peak = [m.y_imp[t].value for t in m.T]
+    print(f'Peak power imported during the month: {max(y_peak):.2f} kW')
+    print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
+    ENS = [m.ENS[t].value for t in m.T]
+    if any(value != 0 for value in ENS):
+        print(f'!! There is {max(ENS):.5f} kWh energy not supplied in the model!!')
     
 
-    Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
+    #Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
 
 

@@ -36,19 +36,24 @@ def SpotPrices(): #create dictionary of spot prices in usable format
 if __name__ == '__main__':
     prices = SpotPrices()
 
-    plt.figure()
+    plt.rc('xtick', labelsize=14) 
+    plt.rc('ytick', labelsize=14) 
+    plt.rc('font', family='serif') 
+
+    plt.figure(figsize = (12,6))
     plt.step(range(744), prices.values())
     plt.xticks([i for i in range(0,744,24)], [f'{i}' for i in range(1,32)])
-    plt.xlabel('Days', fontsize=12, fontweight='bold', family='serif')
-    plt.ylabel('Price [NOK/kWh]', fontsize=12, fontweight='bold', family='serif')
-    plt.title('Day-Ahead Prices for January 2024 for NO3', fontsize=18, fontweight='bold', family='serif')
+    plt.xlabel('Days', fontsize=16, fontweight='bold')
+    plt.ylabel('Price [NOK/kWh]', fontsize=16, fontweight='bold')
+    plt.title('Day-Ahead Prices for January 2024 for NO3', fontsize=18, fontweight='bold')
     plt.xlim(0,743)
     plt.tight_layout()
     plt.grid('on')
     
 
     prices_list = list(prices.values())
-    print(max(prices_list))
+    print(np.mean(prices_list))
+    #print(max(prices_list))
     daily_prices = [prices_list[i:i+24] for i in range(0, len(prices_list), 24)]
     daily_prices.pop(4)
     hourly_prices = zip(*daily_prices)
@@ -59,7 +64,7 @@ if __name__ == '__main__':
     top = mean_prices + std_prices
     bottom = mean_prices - std_prices
 
-    plt.figure()
+    plt.figure() #NB litt rart å bare fjernedagen med den høyeste prisen? også er ikke dette step-plottet helt korrekt, må evt. utvides
     plt.step(range(24), mean_prices, linewidth = 2)
     plt.fill_between(range(24), top, bottom, step = 'pre', alpha = 0.2)
     plt.xlabel('Hours', fontsize=12, fontweight='bold', family='serif')

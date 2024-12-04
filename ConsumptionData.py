@@ -265,28 +265,27 @@ if __name__ == '__main__':
     # _________DATA PROCESSING OF SMALL FILE________
     demand = ReadCSVDemandFile('AustinDemand.csv')
 
-    plt.figure()
-    plt.plot(demand.values())
-    plt.xlabel('hours')
-    plt.ylabel('kW')
-    plt.title('Aggregated demand of 25 households')
-    plt.show()
+    # plt.figure()
+    # plt.plot(demand.values())
+    # plt.xlabel('hours')
+    # plt.ylabel('kW')
+    # plt.title('Aggregated demand of 25 households')
 
-    no_hours_consumption_below_16 = 0
-    total = 0
-    for hour in demand:
-        total += demand[hour]
-        if demand[hour] <= 16:
-            no_hours_consumption_below_16 += 1
+    # no_hours_consumption_below_16 = 0
+    # total = 0
+    # for hour in demand:
+    #     total += demand[hour]
+    #     if demand[hour] <= 16:
+    #         no_hours_consumption_below_16 += 1
     
-    #antall timer med forbruk uncer 16 kW er 0
-    #miste forbruk er 16.9kW
-    #gjennomsnittlig forbruk er 40 kW
+    """antall timer med forbruk uncer 16 kW er 0
+    miste forbruk er 16.9kW
+    gjennomsnittlig forbruk er 40 kW"""
+
+    hours = [i for i in range(25)]
 
     daily_demand = [list(demand.values())[i:i+24] for i in range(0, len(demand), 24)]
-
     transposed = zip(*daily_demand)
-
     hourly_demand = list(transposed)
     hourly_mean = np.array([sum(hourly_demand[i]) for i in range(len(hourly_demand))])/len(hourly_demand)
     hourly_std = np.array([stats.tstd(hourly_demand[i]) for i in range(len(hourly_demand))])
@@ -294,15 +293,21 @@ if __name__ == '__main__':
     top = hourly_mean + hourly_std
     bottom = hourly_mean - hourly_std
 
+    hourly_mean_extended = np.append(hourly_mean, hourly_mean[-1])
+    top_extended = np.append(top, top[-1])
+    bottom_extended = np.append(bottom, bottom[-1])
 
-
-    plt.step(range(24), hourly_mean, linewidth = 2, color = 'tab:red')
-    plt.fill_between(range(24), top, bottom, step = 'pre', alpha = 0.2, color = 'tab:red')
-    plt.xticks(range(24))
-    plt.xlabel('Hours', fontsize=12, fontweight='bold', family='serif')
-    plt.ylabel('Power [kW]', fontsize=12, fontweight='bold', family='serif')
-    plt.title('Average hourly aggregated household demand with standard deviation', fontsize=18, fontweight='bold', family='serif')
-    plt.xlim(0,23)
+    plt.rc('xtick', labelsize=14) 
+    plt.rc('ytick', labelsize=14) 
+    plt.rc('font', family='serif') 
+    plt.figure(figsize=(12,6))
+    plt.step(hours, hourly_mean_extended, linewidth = 2, color = 'tab:red', where='post')
+    plt.fill_between(hours, top_extended, bottom_extended, step = 'post', alpha = 0.2, color = 'tab:red')
+    plt.xticks(hours)
+    plt.xlabel('Hours', fontsize=16, fontweight='bold')
+    plt.ylabel('Power [kW]', fontsize=16, fontweight='bold')
+    plt.title('Average hourly aggregated household demand with standard deviation', fontsize=18, fontweight='bold')
+    plt.xlim(0,24)
     plt.tight_layout()
     plt.grid('on')
     plt.show()
