@@ -64,8 +64,8 @@ def Graphical_Results(m): #Function to plot results
     adjusted_demand = np.array([(d - e) for d, e in zip(demand, e_dis)]) #each element is the result of subtracting e_dis from demand.
     adjusted_EV_demand = np.array([(d - e) for d, e in zip(EV_demand, e_EV_dis)]) #each element is the result of subtracting e_EV_dis from demand.
 
-    plt.rc('xtick', labelsize=10)  # X-tick customization
-    plt.rc('ytick', labelsize=10)  # Y-tick customization
+    plt.rc('xtick', labelsize=14)  # X-tick customization
+    plt.rc('ytick', labelsize=14)  # Y-tick customization
     plt.rc('font', family='serif') # Change font family globally
 
     days = [i for i in range(1,32)]
@@ -87,24 +87,22 @@ def Graphical_Results(m): #Function to plot results
     ax1.bar(hours, ENS, align = 'edge', color = 'yellow', label = 'ENS')
     ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand, label = 'Avoided EV charging', color = 'darkred')
     ax1.bar(hours, e_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_dis, label = 'BESS discharging', color = 'orangered')
-    
     # Format primary y-axis
-    ax1.set_xlabel('Days',fontsize=14, fontweight='bold', family='serif')
+    ax1.set_xlabel('Days',fontsize=16, fontweight='bold')
     ax1.set_xticks([i for i in range(0,744,24)], [f'{day}' for day in days_str])  # Reducing ticks for better readability
-    ax1.set_ylabel('Power [kW]',fontsize=14, fontweight='bold', family='serif')
+    ax1.set_ylabel('Power [kW]',fontsize=16, fontweight='bold')
     ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif'})
     ax1.set_xlim(24*27, 24*29)
     ax1.set_ylim(0, 95)
-
     # Adding the secondary y-axis for Spotprice
     ax2 = ax1.twinx()
     ax2.step(hours, price, where = 'post', label='Spot price', color='tab:blue', linewidth = 2)
-    ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=14, fontweight='bold', family='serif')
+    ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=16, fontweight='bold')
     ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif'})
     ax2.set_ylim([0, 1])
 
     # Adding a title and adjusting layout
-    plt.title('Grid import and distribution', fontsize=18, fontweight='bold', family='serif')
+    plt.title('Grid import and distribution', fontsize=18, fontweight='bold')
     fig.tight_layout()
 
 
@@ -115,21 +113,19 @@ def Graphical_Results(m): #Function to plot results
     ax1.step(hours, battery, where = 'post', label='State of Charge', color='tab:green')
     ax1.bar(hours, e_cha, align='edge', label = 'Battery charge', color = 'green')
     ax1.bar(hours, e_dis, align='edge', label = 'Battery discharge', color='red')  
-
-    ax1.set_xlabel('Days', fontsize=14, fontweight='bold', family='serif')
+    ax1.set_xlabel('Days', fontsize=16, fontweight='bold')
     ax1.set_xticks([i for i in range(0,744,24)], [f'{day}' for day in days_str])  # Reducing ticks for better readability
-    ax1.set_ylabel('Power [kW]',fontsize=14, fontweight='bold', family='serif')
+    ax1.set_ylabel('Power [kW]',fontsize=16, fontweight='bold')
     ax1.legend(loc='upper left', ncol=3, prop = {'weight': 'bold', 'family': 'serif'})
     ax1.set_xlim(24*27, 24*29)
     ax1.set_ylim(0,90)
-
     ax2 = ax1.twinx() #Creates a second y-axis on the right
     ax2.step(hours, price, where = 'post', label = 'Spot price', color = 'tab:blue')
-    ax2.set_ylabel('Spot Price [NOK/kWh]',fontsize=14, fontweight='bold', family='serif')
+    ax2.set_ylabel('Spot Price [NOK/kWh]',fontsize=16, fontweight='bold')
     ax2.legend(loc = 'upper right', prop = {'weight': 'bold', 'family': 'serif'})
     ax2.set_ylim([0, 1])
 
-    plt.title('The Community Battery', fontsize=18, fontweight='bold', family='serif')
+    plt.title('The Community Battery', fontsize=18, fontweight='bold')
     fig2.tight_layout()  # Adjust layout to prevent overlapping
 
 
@@ -137,24 +133,22 @@ def Graphical_Results(m): #Function to plot results
     #plotting the EV "battery"
     fig3, ax1 = plt.subplots(figsize = (10,6))
     ax1.step(hours, EV_battery, where = 'post', label='EV flexibility potential', color='tab:green')
-    ax1.bar(hours, EV_demand, align='edge', color ='tab:gray', label='Regular EV charging')
+    ax1.bar(hours, EV_demand, align='edge', label='Regular EV charging', color ='tab:gray')
     ax1.bar(hours, e_EV_cha, align='edge', bottom = adjusted_EV_demand, label = 'Additional EV charging', color = 'green')
     ax1.bar(hours, e_EV_dis, align='edge', bottom = adjusted_EV_demand, label = 'Averted EV charging', color='red')  # Subtract discharge
-    
-    ax1.set_xlabel('Days', fontsize=14, fontweight='bold', family='serif')
+    ax1.set_xlabel('Days', fontsize=16, fontweight='bold')
     ax1.set_xticks([i for i in range(0,744,24)], [f'{day}' for day in days_str])  # Reducing ticks for better readability
-    ax1.set_ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    ax1.set_ylabel('Power [kW]', fontsize=16, fontweight='bold')
     ax1.legend(loc = 'upper left', ncol = 2, prop = {'weight': 'bold', 'family': 'serif'})
     ax1.set_xlim(24*27, 24*29)
-    ax1.set_ylim(0,110)
-
+    ax1.set_ylim(0, 110)
     ax2 = ax1.twinx() #Creates a second y-axis on the right
     ax2.step(hours, price, where = 'post', label = 'Spot price', color = 'tab:blue')
-    ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=14, fontweight='bold', family='serif')
+    ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=16, fontweight='bold')
     ax2.legend(loc = 'upper right', prop = {'weight': 'bold', 'family': 'serif'})
     ax2.set_ylim([0, 1])
     
-    plt.title('Flexible EV charging', fontsize=18, fontweight='bold', family='serif')
+    plt.title('Flexible EV charging', fontsize=18, fontweight='bold')
     fig3.tight_layout()  # Adjust layout to prevent overlapping
     plt.show()
 
@@ -193,8 +187,8 @@ def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, comp
     price_hourly = list(price_transposed)
     price_hourly_mean = np.array([sum(price_hourly[i]) for i in range(len(price_hourly))])/len(price_hourly)
 
-    plt.rc('xtick', labelsize=10)  # X-tick customization
-    plt.rc('ytick', labelsize=10)  # Y-tick customization
+    plt.rc('xtick', labelsize=14)  # X-tick customization
+    plt.rc('ytick', labelsize=14)  # Y-tick customization
     plt.rc('font', family='serif') # Change font family globally
     
     fig, ax1 = plt.subplots(figsize = (10,6))
@@ -204,12 +198,12 @@ def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, comp
     ax1.step(hours, case_3_hourly_mean,  color = 'tab:purple', label = 'case 3')
     ax1.set_xlim(0,23)
     ax1.set_xticks(hours)
-    ax1.set_xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
+    ax1.set_xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
     ax1.set_ylim(40,85)
-    ax1.set_ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    ax1.set_ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
     ax1.legend(loc = 'upper left', ncol = 2, prop = {'weight': 'bold', 'family': 'serif'})
     ax2 = ax1.twinx()
-    ax2.set_ylabel('Price [NOK/kWh)]', fontsize=14, fontweight='bold', family='serif')
+    ax2.set_ylabel('Price [NOK/kWh)]', fontsize=16, fontweight='bold', family='serif')
     ax2.step(hours, price_hourly_mean, linestyle = '--', label = 'spot price')
     ax2.legend(loc = 'upper right', ncol = 1, prop = {'weight': 'bold', 'family': 'serif'})
     plt.title('Average hourly grid import and average spot price', fontsize=18, fontweight='bold', family='serif')
@@ -258,26 +252,30 @@ def Box_Plots(m):
     y_EV_box = list(y_EV_transposed)
     e_cha_box = list(e_cha_transposed)
 
+    plt.rc('xtick', labelsize=14) 
+    plt.rc('ytick', labelsize=14) 
+    plt.rc('font', family='serif') 
+
     plt.figure(figsize = (10,6))
     plt.boxplot(y_box)
-    plt.xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
-    plt.ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    plt.xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
+    plt.ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
     plt.ylim(0, 100)
     plt.title('Grid import', fontsize=18, fontweight='bold', family='serif')
     plt.tight_layout()
     
     plt.figure(figsize = (10,6))
     plt.boxplot(y_EV_box)
-    plt.xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
-    plt.ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    plt.xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
+    plt.ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
     plt.ylim(0, 35)
     plt.title('EV charging', fontsize=18, fontweight='bold', family='serif')
     plt.tight_layout()
 
     plt.figure(figsize = (10,6))
     plt.boxplot(e_cha_box)
-    plt.xlabel('Hours', fontsize=14, fontweight='bold', family='serif')
-    plt.ylabel('Power [kW]', fontsize=14, fontweight='bold', family='serif')
+    plt.xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
+    plt.ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
     plt.ylim(0, 35)
     plt.title('BESS charging', fontsize=18, fontweight='bold', family='serif')
     plt.tight_layout()
@@ -298,7 +296,6 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
     #setter hva importen skal begrens til     
     y_lim = np.linspace(0.2, 73.2, 74)
     y_lim = y_lim[::-1]
-    print(y_lim)
 
     obj_value = []
 
@@ -308,8 +305,8 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
         Solve(m)
         obj_value.append(pyo.value(m.Obj))
 
-    plt.rc('xtick', labelsize=10) 
-    plt.rc('ytick', labelsize=10) 
+    plt.rc('xtick', labelsize=14) 
+    plt.rc('ytick', labelsize=14) 
     plt.rc('font', family='serif') 
     plt.figure(figsize = (10,6))
     plt.axvline(x = 10.2, linestyle = '--', color = 'k')
@@ -317,7 +314,7 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
     plt.xlabel('Grid Import Allowed [kW]', fontsize = 14, fontweight='bold')
     plt.xlim(10,73)
     plt.xticks([i for i in range(0,75,5)])
-    plt.ylabel('Total Costs [ NOK]', fontsize = 14, fontweight='bold')
+    plt.ylabel('Total Costs [kNOK]', fontsize = 16, fontweight='bold')
     plt.title('Cost of Flexibility', fontsize = 18, fontweight='bold')
     plt.tight_layout()
     plt.show()
@@ -400,6 +397,6 @@ def Economic_plots(base_case_file, compare_case_file, compare_2_case_file, compa
 
 if __name__ == '__main__':
 
-    #Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
 
-    Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    #Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
