@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import pyomo.environ as pyo
 from Formulation import ModelSetUp, Solve
+from GridTariff import GridTariffEnergy, GridTariffPower
 
 
 
@@ -333,7 +334,72 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
     # a = np.exp(log_a)
     # print(f"Exponential Model: y = {a:.3f} * e^({b:.3f} * x)")
 
+def Economic_plots(base_case_file, compare_case_file, compare_2_case_file, compare_3_case_file):
+    #GRID TARIFF DATA   
+    energy = GridTariffEnergy()
+    power = GridTariffPower()
+
+    #SPOT PRICE, GRID IMPORT AND ENS DATA
+    base = pd.read_excel(base_case_file)
+    case1 = pd.read_excel(compare_case_file)
+    case2 = pd.read_excel(compare_2_case_file)
+    case3 = pd.read_excel(compare_3_case_file)
+
+    #RETRIEVING THE DATA FROM THE FILES
+    spot_price = base['Price [NOK/kWh]']
+    grid_import = [base['Power Import [kW]'], case1['Power Import [kW]'], case2['Power Import [kW]'], case3['Power Import [kW]']]
+    max_grid_import = [max(base['Power Import [kW]']), max(case1['Power Import [kW]']), max(case2['Power Import [kW]']), max(case3['Power Import [kW]'])]
+    CENS = [sum(base['CENS']), sum(case1['CENS']), sum(case2['CENS']), sum(case3['CENS'])]
+
+    spot_volumetric_costs = []
+    grid_volumetric_costs = []
+    monthly_demand_charge = []
+    
+    for j in range(len(grid_import)):
+        spot_volumetric_costs_temp = 0
+        grid_volumetric_costs_temp = 0
+        #CALCULATING THE VOLUMETRIC COSTS
+        for i in range(len(spot_price)):
+            spot_volumetric_costs_temp += spot_price[i]*grid_import[j][i]
+            grid_volumetric_costs_temp += energy[i]*grid_import[j][i]
+        spot_volumetric_costs.append(spot_volumetric_costs_temp)
+        grid_volumetric_costs.append(grid_volumetric_costs_temp)
+
+    
+        #CALCULATING THE MONTLY DEMAND CHARGE
+        for bracket in power.keys():
+            if '++' in bracket:
+                lower = int(bracket.split('++')[0])
+                upper = 10000
+            else: 
+                lower, upper = map(int, bracket.split('-'))
+
+            if max_grid_import[j] > lower and max_grid_import[j] <= upper:
+                monthly_demand_charge.append(power[bracket])
+    
+    x = ['Base Case', 'Case 1', 'Case 2', 'Case 3']
+    spot_volumetric_costs = np.array(spot_volumetric_costs)/1000
+    grid_volumetric_costs = np.array(grid_volumetric_costs)/1000
+    monthly_demand_charge = np.array(monthly_demand_charge)/1000
+    CENS = np.array(CENS)/1000
+
+    plt.rc('xtick', labelsize=14) 
+    plt.rc('ytick', labelsize=14) 
+    plt.rc('font', family='serif')
+    plt.figure(figsize = (10,6))
+    plt.bar(x, spot_volumetric_costs, label = 'Electricity Price', color = 'tab:blue', alpha = 0.8)
+    plt.bar(x, grid_volumetric_costs, bottom = spot_volumetric_costs, label = 'Volumteric Grid Tariff', color = 'tab:green', alpha = 0.8)
+    plt.bar(x, monthly_demand_charge, bottom = spot_volumetric_costs + grid_volumetric_costs, label = 'Monthly Demand Charge', color = 'forestgreen')
+    plt.bar(x, CENS, bottom = spot_volumetric_costs + grid_volumetric_costs + monthly_demand_charge, label = 'CENS', color = 'yellow', alpha = 0.8)
+    plt.legend(loc='upper left', prop = {'weight': 'bold', 'family': 'serif'})
+    plt.ylabel('Price [kNOK]', fontsize = 16, fontweight='bold')
+    plt.title('Total Costs', fontsize = 18, fontweight='bold')
+    plt.tight_layout()
+    plt.show()
+
 
 if __name__ == '__main__':
 
-    Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    #Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+
+    Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')

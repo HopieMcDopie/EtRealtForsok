@@ -19,7 +19,7 @@ def GridTariffEnergy():
             energy[h] = energy_night
 
     for day in range(1,31): #create night/day part of tariff for the entire month
-        last_hour = len(energy) #correcting the hours over multiple days
+        last_hour = len(energy) 
         for h in hour:
             energy[last_hour + h] = energy[h]
 

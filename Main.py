@@ -61,7 +61,7 @@ if __name__ == "__main__":
     print(f'Cost of respective grid tariff power price bracket: {pyo.value(m.C_grid_power):.2f} NOK')
     ENS = [m.ENS[t].value for t in m.T]
     if any(value != 0 for value in ENS):
-        print(f'!! There is {max(ENS):.2f} kWh energy not supplied in the model!!')
+        print(f'!! There is {max(ENS):.5f} kWh energy not supplied in the model!!')
     
 
     # Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
