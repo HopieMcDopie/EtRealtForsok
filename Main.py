@@ -16,11 +16,13 @@ if __name__ == "__main__":
 
     normal_run = True #Set to false if you want to print marginal cost of flexibility curve
 
+
+
     if normal_run == True:
-    #User imput to define the scenarios    
+    ###User imput to define the scenarios    
         what2run = input('\n\nDefine the case to be run: \n     Base Case: write "b" \n     Case 1: write "1"\n     Case 2: write "2"\n     Case 3: write "3"\nAnswer: ')
         case_dict = Initialize_Case(what2run) #decides what case to be run
-    #Gather input values to be used in "ModelSetUp" function:
+    ###Gather input values to be used in "ModelSetUp" function:
     SpotPrice = SpotPrices() # Gives the spot prices for NO3 for january 2024, hourly resolution
     EnergyTariff = GridTariffEnergy() # Gives the energy part of the grid tariff for NO3, hourly resolution
     PowerTariff = GridTariffPower() # Gives the power part of the grid tariff for NO3
@@ -29,7 +31,7 @@ if __name__ == "__main__":
                                                     # given number of EVs for a month, hourly resolution, note that share_of_CP 
                                                     # is the share of private charging points
 
-    # These constants are linked to the shared community battery
+    ###These constants are linked to the shared community battery
     batt_const = {'Battery energy capacity': 80, #kWh
                   'Initial State of Charge': 0, #kWh
                   'Charge capacity': 80*0.20, #kW
@@ -37,28 +39,28 @@ if __name__ == "__main__":
                   'eta_cha': 0.85, #BESS charging capacity
                   'eta_dis': 0.95} #BESS discharging capacity
 
-    #Determening how flexibility for EV-charging is modelled
+    ###Determening how flexibility for EV-charging is modelled
     flex_const = {'Monthly energy' : FindMonthlyChargeEnergy(EV_data), #kWh
                   'Flexible': 0.3} # %
 
     if normal_run == True:
-        #Setting up and solving the model
+        ###Setting up and solving the model
         m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict) #Setting up the optimization model
         Solve(m) #Solvign the optimisation problem
 
-        #Getting data for the hour of IBDR
-        print(pyo.value(m.D[674]))
-        print(pyo.value(m.e_cha[674]))
-        print(pyo.value(m.D_EV[674]))
-        print(pyo.value(m.e_EV_cha[674]))
-        print(pyo.value(m.y_imp[674]))
+        ###Getting data for the hour of IBDR
+        # print(pyo.value(m.D[674]))
+        # print(pyo.value(m.e_cha[674]))
+        # print(pyo.value(m.D_EV[674]))
+        # print(pyo.value(m.e_EV_cha[674]))
+        # print(pyo.value(m.y_imp[674]))
 
-        #Support functions to store and present data
-        Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
+        ###Support functions to store and present data
+        #Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
         #Graphical_Results(m, what2run) #Printing graphical results of values from optimisation values
-        Box_Plots(m)
+        #Box_Plots(m)
 
-        #Prints
+        ###Prints
         print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
         y_peak = [m.y_imp[t].value for t in m.T]
         print(f'Peak power imported during the month: {max(y_peak):.2f} kW')

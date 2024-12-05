@@ -82,11 +82,12 @@ def Graphical_Results(m, what2run): #Function to plot results
     ax1.bar(hours, adjusted_demand, align='edge', label='Household Demand', color='lightgrey')
     ax1.bar(hours, adjusted_EV_demand, align='edge', bottom = adjusted_demand, label='Regular EV Charging', color='tab:grey')
     if what2run != 'b':
-        ax1.bar(hours, e_EV_cha, align= 'edge', bottom = adjusted_demand + adjusted_EV_demand , label = 'Additional EV Charging', color = 'darkgreen')
-        ax1.bar(hours, e_cha, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_cha, label = 'BESS Charging', color = 'limegreen')
+        ax1.bar(hours, e_cha, align ='edge', bottom = adjusted_demand + adjusted_EV_demand, label = 'BESS Charging', color = 'limegreen')
+        ax1.bar(hours, e_EV_cha, align= 'edge', bottom = adjusted_demand + adjusted_EV_demand + e_cha, label = 'Additional EV Charging', color = 'darkgreen')
         #ax1.bar(hours, ENS, align = 'edge', color = 'yellow', label = 'ENS')
-        ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand, label = 'Avoided EV Charging', color = 'darkred')
-        ax1.bar(hours, e_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_dis, label = 'BESS Discharging', color = 'orangered')
+        ax1.bar(hours, e_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand , label = 'BESS Discharging', color = 'orangered')
+        ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand+ e_dis, label = 'Avoided EV Charging', color = 'darkred')
+        
     # Format primary y-axis
     #ax1.set_xlabel('Days',fontsize=16, fontweight='bold')
     #ax1.set_xticks([i for i in range(0,744,24)], [f'{day}' for day in days_str])  # Reducing ticks for better readability
@@ -218,7 +219,7 @@ def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, comp
     ax1.legend(loc = 'upper left', ncol = 2, prop = {'weight': 'bold', 'family': 'serif', 'size': 14})
     ax2 = ax1.twinx()
     ax2.set_ylabel('Price [NOK/kWh)]', fontsize=16, fontweight='bold', family='serif')
-    ax2.step(hours, price_hourly_mean, linestyle = '--', label = 'spot price',linewidth = 2, where = 'post')
+    ax2.step(hours, price_hourly_mean, linestyle = '--', label = 'Spot Price',linewidth = 2, where = 'post')
     ax2.legend(loc = 'upper right', ncol = 1, prop = {'weight': 'bold', 'family': 'serif', 'size': 14})
     plt.title('Average Hourly Grid Import and Spot Price', fontsize=18, fontweight='bold', family='serif')
     fig.tight_layout()
@@ -257,41 +258,68 @@ def Box_Plots(m):
     y_split = [list(y)[i:i+24] for i in range(0, len(y), 24)]
     y_EV_split = [list(y_EV)[i:i+24] for i in range(0, len(y), 24)]
     e_cha_split = [list(e_cha)[i:i+24] for i in range(0, len(e_cha), 24)]
+    e_dis_split = [list(e_dis)[i:i+24] for i in range(0, len(e_dis), 24)]
     
     #transponerer den slik at vi får 24 lister med 31 verdier
     y_transposed = zip(*y_split)
     y_EV_transposed = zip(*y_EV_split)
     e_cha_transposed = zip(*e_cha_split)
+    e_dis_transposed = zip(*e_dis_split)
     y_box = list(y_transposed)
     y_EV_box = list(y_EV_transposed)
     e_cha_box = list(e_cha_transposed)
+    e_dis_box = list(e_dis_transposed)
 
     plt.rc('xtick', labelsize=14) 
     plt.rc('ytick', labelsize=14) 
     plt.rc('font', family='serif') 
 
     plt.figure(figsize = (10,6))
-    plt.boxplot(y_box)
+    box1 = plt.boxplot(y_box, patch_artist=True)
+    for median in box1['medians']:
+        median.set_color('darkorange')
+        median.set_linewidth(2)
+    for patch in box1['boxes']:
+        patch.set_facecolor('bisque')
     plt.xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
     plt.ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
     plt.ylim(0, 100)
-    plt.title('Grid import', fontsize=18, fontweight='bold', family='serif')
+    plt.title('Grid Import', fontsize=18, fontweight='bold', family='serif')
     plt.tight_layout()
     
     plt.figure(figsize = (10,6))
-    plt.boxplot(y_EV_box)
+    box2 = plt.boxplot(y_EV_box, patch_artist=True)
+    for median in box2['medians']:
+        median.set_color('darkblue')
+        median.set_linewidth(2)
+    for patch in box2['boxes']:
+        patch.set_facecolor('lightsteelblue')
     plt.xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
     plt.ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
     plt.ylim(0, 35)
-    plt.title('EV charging', fontsize=18, fontweight='bold', family='serif')
+    plt.title('EV Charging', fontsize=18, fontweight='bold', family='serif')
     plt.tight_layout()
 
     plt.figure(figsize = (10,6))
-    plt.boxplot(e_cha_box)
+    box3 = plt.boxplot(e_cha_box, patch_artist=True)
+    box4 = plt.boxplot(e_dis_box, patch_artist=True)
+    for median in box3['medians']:
+        median.set_color('darkgreen')
+        median.set_linewidth(2)
+    for patch in box3['boxes']:
+        patch.set_facecolor('palegreen')
+    for patch in box4['boxes']:
+        patch.set_facecolor('lightcoral')
+    for median in box4['medians']:
+        median.set_color('darkred')
+        median.set_linewidth(2)
     plt.xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
     plt.ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
     plt.ylim(0, 35)
-    plt.title('BESS charging', fontsize=18, fontweight='bold', family='serif')
+    plt.title('BESS Charging/Discharging', fontsize=18, fontweight='bold', family='serif')
+    plt.plot([], [], color='darkgreen', label='Charge')
+    plt.plot([], [], color='darkred', label='Discharge')
+    plt.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
     plt.tight_layout()
     plt.show()
 
@@ -432,6 +460,6 @@ def Economic_plots(base_case_file, compare_case_file, compare_2_case_file, compa
 
 if __name__ == '__main__':
 
-    #Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
 
-    Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    #Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
