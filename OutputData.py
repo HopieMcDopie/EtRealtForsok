@@ -274,7 +274,7 @@ def Box_Plots(m):
     plt.rc('ytick', labelsize=14) 
     plt.rc('font', family='serif') 
 
-    plt.figure(figsize = (10,6))
+    plt.figure(figsize = (12,6))
     box1 = plt.boxplot(y_box, patch_artist=True)
     for median in box1['medians']:
         median.set_color('darkorange')
@@ -287,7 +287,7 @@ def Box_Plots(m):
     plt.title('Grid Import', fontsize=18, fontweight='bold', family='serif')
     plt.tight_layout()
     
-    plt.figure(figsize = (10,6))
+    plt.figure(figsize = (12,6))
     box2 = plt.boxplot(y_EV_box, patch_artist=True)
     for median in box2['medians']:
         median.set_color('darkblue')
@@ -300,7 +300,7 @@ def Box_Plots(m):
     plt.title('EV Charging', fontsize=18, fontweight='bold', family='serif')
     plt.tight_layout()
 
-    plt.figure(figsize = (10,6))
+    plt.figure(figsize = (12,6))
     box3 = plt.boxplot(e_cha_box, patch_artist=True)
     box4 = plt.boxplot(e_dis_box, patch_artist=True)
     for median in box3['medians']:
