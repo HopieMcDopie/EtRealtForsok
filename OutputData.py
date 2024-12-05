@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.linear_model import LinearRegression
 import pyomo.environ as pyo
 from Formulation import ModelSetUp, Solve
 from GridTariff import GridTariffEnergy, GridTariffPower
@@ -46,7 +45,7 @@ def Store_Results_In_File(m, what2run): #Storing model output values to an excel
     results_df.to_excel(file_name, index = False)
     return ()
 
-def Graphical_Results(m): #Function to plot results
+def Graphical_Results(m, what2run): #Function to plot results
     hours = list(m.T)
     price = np.array([m.C_spot[t] for t in m.T])
     y = np.array([m.y_imp[t].value for t in m.T])
@@ -79,27 +78,36 @@ def Graphical_Results(m): #Function to plot results
 #a plot showcasing where the energy import is coming from
     #Stacked bar plot
     fig, ax1 = plt.subplots(figsize = (12,6))
-    ax1.step(hours, y, where = 'post', label='Grid Import', color='k', linewidth = 2)
+    ax1.step(hours, y, where = 'post', label='Grid Import', color='magenta', linewidth = 2)
     ax1.bar(hours, adjusted_demand, align='edge', label='Household Demand', color='lightgrey')
     ax1.bar(hours, adjusted_EV_demand, align='edge', bottom = adjusted_demand, label='Regular EV Charging', color='tab:grey')
-    # ax1.bar(hours, e_EV_cha, align= 'edge', bottom = adjusted_demand + adjusted_EV_demand , label = 'Additional EV Charging', color = 'darkgreen')
-    # ax1.bar(hours, e_cha, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_cha, label = 'BESS Charging', color = 'limegreen')
-    # #ax1.bar(hours, ENS, align = 'edge', color = 'yellow', label = 'ENS')
-    # ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand, label = 'Avoided EV Charging', color = 'darkred')
-    # ax1.bar(hours, e_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_dis, label = 'BESS Discharging', color = 'orangered')
+    if what2run != 'b':
+        ax1.bar(hours, e_EV_cha, align= 'edge', bottom = adjusted_demand + adjusted_EV_demand , label = 'Additional EV Charging', color = 'darkgreen')
+        ax1.bar(hours, e_cha, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_cha, label = 'BESS Charging', color = 'limegreen')
+        #ax1.bar(hours, ENS, align = 'edge', color = 'yellow', label = 'ENS')
+        ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand, label = 'Avoided EV Charging', color = 'darkred')
+        ax1.bar(hours, e_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand + e_EV_dis, label = 'BESS Discharging', color = 'orangered')
     # Format primary y-axis
-    ax1.set_xlabel('Days',fontsize=16, fontweight='bold')
-    ax1.set_xticks([i for i in range(0,744,24)], [f'{day}' for day in days_str])  # Reducing ticks for better readability
+    #ax1.set_xlabel('Days',fontsize=16, fontweight='bold')
+    #ax1.set_xticks([i for i in range(0,744,24)], [f'{day}' for day in days_str])  # Reducing ticks for better readability
+    major_ticks = [i for i in range(0,744,24)]
+    major_labels =[f'{day}' for day in days_str]
+    minor_ticks = [i for i in range(0, 744, 6)]
+    ax1.set_xticks(major_ticks)
+    ax1.set_xticklabels(major_labels, fontsize = 14, fontweight = 'bold')
+    ax1.set_xticks(minor_ticks, minor = True)
+    ax1.tick_params(axis = 'x', which = 'minor', length=5, color='gray')
+    ax1.xaxis.set_tick_params(which='minor', labelsize=14)
     ax1.set_ylabel('Power [kW]',fontsize=16, fontweight='bold')
     ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
     ax1.set_xlim(24*27, 24*29)
     ax1.set_ylim(0, 95)
     # Adding the secondary y-axis for Spotprice
     ax2 = ax1.twinx()
-    ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2)
+    ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
     ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=16, fontweight='bold')
     ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-    ax2.set_ylim([0, 1])
+    ax2.set_ylim([0, 0.3])
     # Adding a title and adjusting layout
     plt.title('Grid Import and Allocation', fontsize=18, fontweight='bold')
     fig.tight_layout()
@@ -320,9 +328,30 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
     plt.xlabel('Grid Import Allowed [kW]', fontsize = 14, fontweight='bold')
     plt.xlim(10,73)
     plt.xticks([i for i in range(0,75,5)])
-    plt.ylabel('Total Costs [kNOK]', fontsize = 16, fontweight='bold')
+    plt.ylabel('Total Costs [NOK]', fontsize = 16, fontweight='bold')
     plt.title('Cost of Flexibility', fontsize = 18, fontweight='bold')
     plt.tight_layout()
+
+    # print(y_lim)
+    # print(obj_value)
+
+    obj_val_diff = [obj_value[0]]
+    for i in range(len(obj_value)-1):
+        obj_val_diff.append(obj_value[i+1] - obj_value[i])
+
+    # print(obj_val_diff)
+
+    plt.figure(figsize = (10,6))
+    plt.axvline(x = 10.2, linestyle = '--', color = 'k')
+    plt.step(y_lim, obj_val_diff, linewidth = 2)
+    plt.xlabel('Grid Import Allowed [kW]', fontsize = 14, fontweight='bold')
+    plt.xticks([i for i in range(10,75,5)])
+    plt.xlim(9.9,70.1)
+    plt.ylabel('Total Costs [NOK]', fontsize = 16, fontweight='bold')
+    plt.ylim(0,0.35)
+    plt.title('Marginal Cost of Flexibility', fontsize = 18, fontweight='bold')
+    plt.tight_layout()
+
     plt.show()
     
     # #linear regression
