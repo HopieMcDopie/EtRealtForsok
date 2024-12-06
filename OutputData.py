@@ -89,8 +89,6 @@ def Graphical_Results(m, what2run): #Function to plot results
         ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand+ e_dis, label = 'Avoided EV Charging', color = 'darkred')
         
     # Format primary y-axis
-    #ax1.set_xlabel('Days',fontsize=16, fontweight='bold')
-    #ax1.set_xticks([i for i in range(0,744,24)], [f'{day}' for day in days_str])  # Reducing ticks for better readability
     major_ticks = [i for i in range(0,744,24)]
     major_labels =[f'{day}' for day in days_str]
     minor_ticks = [i for i in range(0, 744, 6)]
@@ -101,14 +99,16 @@ def Graphical_Results(m, what2run): #Function to plot results
     ax1.xaxis.set_tick_params(which='minor', labelsize=14)
     ax1.set_ylabel('Power [kW]',fontsize=16, fontweight='bold')
     ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-    ax1.set_xlim(24*27, 24*29)
-    ax1.set_ylim(0, 95)
-    # Adding the secondary y-axis for Spotprice
-    ax2 = ax1.twinx()
+    #ax1.set_xlim(24*27, 24*29)
+    ax1.set_xlim(24*0, 24*2)
+    #ax1.set_ylim(0, 95)
+    ax1.set_ylim(0,110)
+    ax2 = ax1.twinx() # Adding the secondary y-axis for Spotprice
     ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
     ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=16, fontweight='bold')
     ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-    ax2.set_ylim([0, 0.3])
+    #ax2.set_ylim([0, 0.3])
+    ax2.set_ylim(0.2,1.1)
     # Adding a title and adjusting layout
     plt.title('Grid Import and Allocation', fontsize=18, fontweight='bold')
     fig.tight_layout()
@@ -205,6 +205,13 @@ def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, comp
     plt.rc('xtick', labelsize=14)  # X-tick customization
     plt.rc('ytick', labelsize=14)  # Y-tick customization
     plt.rc('font', family='serif') # Change font family globally
+
+    test = list(base_case['Power Import [kW]'])
+
+    print(test.index(max(test)))
+
+    # plt.figure()
+    # plt.plot(range(744), compare_case['Power Import [kW]'], compare_2_case['Power Import [kW]'])
     
     fig, ax1 = plt.subplots(figsize = (12,6))
     ax1.step(hours, base_hourly_mean, color = 'tab:red', label = 'Base Case', linewidth = 2, where = 'post')
