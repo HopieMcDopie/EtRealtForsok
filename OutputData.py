@@ -99,8 +99,8 @@ def Graphical_Results(m, what2run): #Function to plot results
     ax1.xaxis.set_tick_params(which='minor', labelsize=14)
     ax1.set_ylabel('Power [kW]',fontsize=16, fontweight='bold')
     ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-    #ax1.set_xlim(24*27, 24*29)
-    ax1.set_xlim(24*0, 24*2)
+    ax1.set_xlim(24*27, 24*29)
+    #ax1.set_xlim(24*0, 24*2)
     #ax1.set_ylim(0, 95)
     ax1.set_ylim(0,110)
     ax2 = ax1.twinx() # Adding the secondary y-axis for Spotprice
@@ -344,6 +344,7 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
     
     #setter hva importen skal begrens til     
     y_lim = np.linspace(0.2, 73.2, 74)
+    #y_lim = np.linspace(10.2, 73.2, 64)
     y_lim = y_lim[::-1]
 
     obj_value = []
@@ -367,14 +368,9 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
     plt.title('Cost of Flexibility', fontsize = 18, fontweight='bold')
     plt.tight_layout()
 
-    # print(y_lim)
-    # print(obj_value)
-
     obj_val_diff = [obj_value[0]]
     for i in range(len(obj_value)-1):
         obj_val_diff.append(obj_value[i+1] - obj_value[i])
-
-    # print(obj_val_diff)
 
     plt.figure(figsize = (12,6))
     plt.axvline(x = 10.2, linestyle = '--', color = 'k')
