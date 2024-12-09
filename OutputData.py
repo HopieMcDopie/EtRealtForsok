@@ -208,7 +208,7 @@ def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, comp
 
     test = list(base_case['Power Import [kW]'])
 
-    print(test.index(max(test)))
+    #print(test.index(max(test)))
 
     # plt.figure()
     # plt.plot(range(744), compare_case['Power Import [kW]'], compare_2_case['Power Import [kW]'])
@@ -218,10 +218,10 @@ def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, comp
     ax1.step(hours, case_hourly_mean,  color = 'tab:green', label = 'Case 1', linewidth = 2, where = 'post')
     ax1.step(hours, case_2_hourly_mean,  color = 'tab:orange', label = 'Case 2', linewidth = 2, where = 'post')
     ax1.step(hours, case_3_hourly_mean,  color = 'tab:purple', label = 'Case 3', linewidth = 2, where = 'post')
-    ax1.set_xlim(0,23)
+    #ax1.set_xlim(0,23)
     ax1.set_xticks(hours)
     ax1.set_xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
-    ax1.set_ylim(40,85)
+    #ax1.set_ylim(40,85)
     ax1.set_ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
     ax1.legend(loc = 'upper left', ncol = 2, prop = {'weight': 'bold', 'family': 'serif', 'size': 14})
     ax2 = ax1.twinx()

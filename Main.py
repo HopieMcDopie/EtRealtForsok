@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
         ###Support functions to store and present data
         #Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
-        Graphical_Results(m, what2run) #Printing graphical results of values from optimisation values
+        #Graphical_Results(m, what2run) #Printing graphical results of values from optimisation values
         #Box_Plots(m)
 
         ###Prints
