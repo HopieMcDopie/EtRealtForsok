@@ -107,8 +107,8 @@ def Graphical_Results(m, what2run): #Function to plot results
     ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
     ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=16, fontweight='bold')
     ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-    #ax2.set_ylim([0, 0.3])
-    ax2.set_ylim(0.2,1.1)
+    ax2.set_ylim([0, 0.3])
+    #ax2.set_ylim(0.2,1.1)
     # Adding a title and adjusting layout
     plt.title('Grid Import and Allocation', fontsize=18, fontweight='bold')
     fig.tight_layout()
