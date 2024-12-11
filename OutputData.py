@@ -558,11 +558,30 @@ def Economic_plots(base_case_file, compare_case_file, compare_2_case_file, compa
     plt.tight_layout()
     plt.show()
 
+def Analysis(file):
+
+    data = pd.read_excel(file)
+
+    grid_import = data['Power Import [kW]']
+
+    counter = 0
+    for el in grid_import:
+        if el >= 75:
+            counter += 1
+    
+    print('Numer of hours with grid import above 75 kW are: ', counter)
+
+
 
 if __name__ == '__main__':
 
     #Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
     
-    Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx', '3')
+    #Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx', '3')
 
     #Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+
+    Analysis('Base_Case_Results.xlsx')
+    Analysis('Case1_Results.xlsx')
+    Analysis('Case2_Results.xlsx')
+    Analysis('Case3_Results.xlsx')
