@@ -158,6 +158,107 @@ def Graphical_Results(m, what2run): #Function to plot results
 #     fig3.tight_layout()  # Adjust layout to prevent overlapping
     plt.show()
 
+def Graphical_Results_2(basecase_file, case1_file, case2_file, case3_file, main_case : str):
+
+    basecase = pd.read_excel(basecase_file)
+    case1 = pd.read_excel(case1_file)
+    case2 = pd.read_excel(case2_file)
+    case3 = pd.read_excel(case3_file)
+
+    hours = basecase['Hour']
+    price = np.array(basecase['Price [NOK/kWh]'])
+    demand = np.array(basecase['Demand [kW]'])
+    EV_demand = np.array(basecase['EV Demand [kW]'])
+    y_base = np.array(basecase['Power Import [kW]'])
+    y_case1 = np.array(case1['Power Import [kW]'])
+    y_case2 = np.array(case2['Power Import [kW]'])
+    y_case3 = np.array(case3['Power Import [kW]'])
+
+
+    if main_case == 'b': # might as well be np.zeros(744)
+        e_cha = np.array(basecase['Charge Power [kW]'])
+        e_dis = np.array(basecase['Discharge Power [kW]'])
+        e_EV_cha = np.array(basecase['EV Charge Power [kW]'])
+        e_EV_dis = np.array(basecase['EV Discharge Power [kW]'])
+
+    if main_case == '1':
+        e_cha = np.array(case1['Charge Power [kW]'])
+        e_dis = np.array(case1['Discharge Power [kW]'])
+        e_EV_cha = np.array(case1['EV Charge Power [kW]'])
+        e_EV_dis = np.array(case1['EV Discharge Power [kW]'])
+
+    if main_case == '2':
+        e_cha = np.array(case2['Charge Power [kW]'])
+        e_dis = np.array(case2['Discharge Power [kW]'])
+        e_EV_cha = np.array(case2['EV Charge Power [kW]'])
+        e_EV_dis = np.array(case2['EV Discharge Power [kW]'])
+
+    if main_case == '3':
+        e_cha = np.array(case3['Charge Power [kW]'])
+        e_dis = np.array(case3['Discharge Power [kW]'])
+        e_EV_cha = np.array(case3['EV Charge Power [kW]'])
+        e_EV_dis = np.array(case3['EV Discharge Power [kW]'])
+
+
+    adjusted_demand = np.array([(d - e) for d, e in zip(demand, e_dis)]) #each element is the result of subtracting e_dis from demand.
+    adjusted_EV_demand = np.array([(d - e) for d, e in zip(EV_demand, e_EV_dis)]) #each element is the result of subtracting e_EV_dis from demand.
+
+    plt.rc('xtick', labelsize=14)  # X-tick customization
+    plt.rc('ytick', labelsize=14)  # Y-tick customization
+    plt.rc('font', family='serif') # Change font family globally
+
+    days = [i for i in range(1,32)]
+    days_str = []
+    for day in days:
+        if day < 10:
+            days_str.append('0' + str(day) + '.01')
+        else:
+            days_str.append(str(day) + '.01')
+
+    fig, ax1 = plt.subplots(figsize = (12,6))
+    if main_case == 'b':
+        ax1.step(hours, y_base, where = 'post', label='Grid Import', color='magenta', linewidth = 2)
+    if main_case == '1':
+        ax1.step(hours, y_base, where = 'post', label='Grid Import Base Case', color='magenta', alpha = 0.8, linewidth = 2, linestyle = '--')
+        ax1.step(hours, y_case1, where = 'post', label='Grid Import Case 1', color='magenta', linewidth = 2)
+    if main_case == '2':
+        ax1.step(hours, y_case1, where = 'post', label='Grid Import Case 1', color='magenta', alpha = 0.8, linewidth = 2, linestyle = '--')
+        ax1.step(hours, y_case2, where = 'post', label='Grid Import Case 2', color='magenta', linewidth = 2)
+    if main_case == '3':
+        ax1.step(hours, y_case2, where = 'post', label='Grid Import Case 2', color='magenta', alpha = 0.8, linewidth = 2, linestyle = '--')
+        ax1.step(hours, y_case3, where = 'post', label='Grid Import Case 3', color='magenta', linewidth = 2)       
+    ax1.bar(hours, adjusted_demand, align='edge', label='Household Demand', color='lightgrey')
+    ax1.bar(hours, adjusted_EV_demand, align='edge', bottom = adjusted_demand, label='Regular EV Charging', color='tab:grey')
+    if main_case != 'b':
+        ax1.bar(hours, e_cha, align ='edge', bottom = adjusted_demand + adjusted_EV_demand, label = 'BESS Charging', color = 'limegreen')
+        ax1.bar(hours, e_EV_cha, align= 'edge', bottom = adjusted_demand + adjusted_EV_demand + e_cha, label = 'Additional EV Charging', color = 'darkgreen')
+        ax1.bar(hours, e_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand , label = 'BESS Discharging', color = 'orangered')
+        ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand+ e_dis, label = 'Avoided EV Charging', color = 'darkred')
+    major_ticks = [i for i in range(0,744,24)]
+    major_labels =[f'{day}' for day in days_str]
+    minor_ticks = [i for i in range(0, 744, 6)]
+    ax1.set_xticks(major_ticks)
+    ax1.set_xticklabels(major_labels, fontsize = 14, fontweight = 'bold')
+    ax1.set_xticks(minor_ticks, minor = True)
+    ax1.tick_params(axis = 'x', which = 'minor', length=5, color='gray')
+    ax1.xaxis.set_tick_params(which='minor', labelsize=14)
+    ax1.set_ylabel('Power [kW]',fontsize=16, fontweight='bold')
+    ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
+    ax1.set_xlim(24*27, 24*29)
+    ax1.set_ylim(0,110)
+    ax2 = ax1.twinx() 
+    ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
+    ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=16, fontweight='bold')
+    ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif', 'size':12})
+    ax2.set_ylim([0, 0.3])
+    plt.title('Grid Import and Allocation', fontsize=18, fontweight='bold')
+    fig.tight_layout()
+    plt.show()
+
+
+
+
+
 def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, compare_3_case_file):
 
     hours = [i for i in range(0,25)]
@@ -463,6 +564,8 @@ def Economic_plots(base_case_file, compare_case_file, compare_2_case_file, compa
 
 if __name__ == '__main__':
 
-    Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    #Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    
+    Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx', '3')
 
     #Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
