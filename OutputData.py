@@ -255,10 +255,6 @@ def Graphical_Results_2(basecase_file, case1_file, case2_file, case3_file, main_
     fig.tight_layout()
     plt.show()
 
-
-
-
-
 def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, compare_3_case_file):
 
     hours = [i for i in range(0,25)]
@@ -472,6 +468,7 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
     obj_val_diff = [obj_value[0]]
     for i in range(len(obj_value)-1):
         obj_val_diff.append(obj_value[i+1] - obj_value[i])
+    obj_val_diff[0] -= obj_val_diff[0]
 
     plt.figure(figsize = (12,6))
     plt.axvline(x = 10.2, linestyle = '--', color = 'k')
@@ -483,7 +480,7 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
     plt.ylim(0,0.35)
     plt.title('Marginal Cost of Flexibility', fontsize = 18, fontweight='bold')
     plt.tight_layout()
-
+    plt.grid()
     plt.show()
     
     # #linear regression
