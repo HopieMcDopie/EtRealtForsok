@@ -93,11 +93,11 @@ def Graphical_Results(m, what2run): #Function to plot results
     major_labels =[f'{day}' for day in days_str]
     minor_ticks = [i for i in range(0, 744, 6)]
     ax1.set_xticks(major_ticks)
-    ax1.set_xticklabels(major_labels, fontsize = 14, fontweight = 'bold')
+    ax1.set_xticklabels(major_labels, fontsize = 16, fontweight = 'bold')
     ax1.set_xticks(minor_ticks, minor = True)
     ax1.tick_params(axis = 'x', which = 'minor', length=5, color='gray')
     ax1.xaxis.set_tick_params(which='minor', labelsize=14)
-    ax1.set_ylabel('Power [kW]',fontsize=16, fontweight='bold')
+    ax1.set_ylabel('Power [kW]',fontsize=18, fontweight='bold')
     ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
     ax1.set_xlim(24*27, 24*29)
     #ax1.set_xlim(24*0, 24*2)
@@ -105,12 +105,12 @@ def Graphical_Results(m, what2run): #Function to plot results
     ax1.set_ylim(0,110)
     ax2 = ax1.twinx() # Adding the secondary y-axis for Spotprice
     ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
-    ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=16, fontweight='bold')
+    ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=18, fontweight='bold')
     ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-    ax2.set_ylim([0, 0.3])
+    ax2.set_ylim([0, 1])
     #ax2.set_ylim(0.2,1.1)
     # Adding a title and adjusting layout
-    plt.title('Grid Import and Allocation', fontsize=18, fontweight='bold')
+    plt.title('Grid Import and Allocation', fontsize=20, fontweight='bold')
     fig.tight_layout()
 
 

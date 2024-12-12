@@ -26,11 +26,11 @@ def SpotPrices(): #create dictionary of spot prices in usable format
 
         if day == 1: 
             for h in hour: #Go through all hours on day 1
-                monthly_spot_price_data[h] = single_spot_price_data[h]
+                monthly_spot_price_data[h] = single_spot_price_data[h]*1.25
         else:
             last_hour = len(monthly_spot_price_data) #adjust hour numbering based on days iterated already
             for h in hour:
-                monthly_spot_price_data[last_hour + h] = single_spot_price_data[h]
+                monthly_spot_price_data[last_hour + h] = single_spot_price_data[h]*1.25
     return monthly_spot_price_data
 
 if __name__ == '__main__':
