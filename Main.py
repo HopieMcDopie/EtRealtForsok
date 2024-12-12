@@ -1,7 +1,7 @@
 import pyomo.environ as pyo
 import matplotlib .pyplot as plt
 from Formulation import Solve, ModelSetUp, Initialize_Case
-from OutputData import Graphical_Results, Store_Results_In_File, Box_Plots, Cost_Of_Flex
+from OutputData import Graphical_Results, Store_Results_In_File, Box_Plots, Cost_Of_Flex, Test
 from SpotPrice import SpotPrices
 from GridTariff import GridTariffEnergy, GridTariffPower
 from EVData import ReadEVData, FindMonthlyChargeEnergy
@@ -14,7 +14,7 @@ ________________________________________________
 """
 if __name__ == "__main__":
 
-    normal_run = True #Set to false if you want to print marginal cost of flexibility curve
+    normal_run = False #Set to false if you want to print marginal cost of flexibility curve
 
 
 
@@ -70,6 +70,7 @@ if __name__ == "__main__":
             print(f'!! There is {max(ENS):.5f} kWh energy not supplied in the model!!')
     
     else:
-        Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
+        #Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
+        Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
 
 

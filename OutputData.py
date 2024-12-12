@@ -158,7 +158,7 @@ def Graphical_Results(m, what2run): #Function to plot results
 #     fig3.tight_layout()  # Adjust layout to prevent overlapping
     plt.show()
 
-def Graphical_Results_2(basecase_file, case1_file, case2_file, case3_file, main_case : str):
+def Graphical_Results_2(basecase_file, case1_file, case2_file, case3_file):
 
     basecase = pd.read_excel(basecase_file)
     case1 = pd.read_excel(case1_file)
@@ -174,86 +174,88 @@ def Graphical_Results_2(basecase_file, case1_file, case2_file, case3_file, main_
     y_case2 = np.array(case2['Power Import [kW]'])
     y_case3 = np.array(case3['Power Import [kW]'])
 
+    main_case_list = ['b', '1', '2' , '3']
+    for el in main_case_list:
+        main_case = el
 
-    if main_case == 'b': # might as well be np.zeros(744)
-        e_cha = np.array(basecase['Charge Power [kW]'])
-        e_dis = np.array(basecase['Discharge Power [kW]'])
-        e_EV_cha = np.array(basecase['EV Charge Power [kW]'])
-        e_EV_dis = np.array(basecase['EV Discharge Power [kW]'])
+        if main_case == 'b': # might as well be np.zeros(744)
+            e_cha = np.array(basecase['Charge Power [kW]'])
+            e_dis = np.array(basecase['Discharge Power [kW]'])
+            e_EV_cha = np.array(basecase['EV Charge Power [kW]'])
+            e_EV_dis = np.array(basecase['EV Discharge Power [kW]'])
 
-    if main_case == '1':
-        e_cha = np.array(case1['Charge Power [kW]'])
-        e_dis = np.array(case1['Discharge Power [kW]'])
-        e_EV_cha = np.array(case1['EV Charge Power [kW]'])
-        e_EV_dis = np.array(case1['EV Discharge Power [kW]'])
+        if main_case == '1':
+            e_cha = np.array(case1['Charge Power [kW]'])
+            e_dis = np.array(case1['Discharge Power [kW]'])
+            e_EV_cha = np.array(case1['EV Charge Power [kW]'])
+            e_EV_dis = np.array(case1['EV Discharge Power [kW]'])
 
-    if main_case == '2':
-        e_cha = np.array(case2['Charge Power [kW]'])
-        e_dis = np.array(case2['Discharge Power [kW]'])
-        e_EV_cha = np.array(case2['EV Charge Power [kW]'])
-        e_EV_dis = np.array(case2['EV Discharge Power [kW]'])
+        if main_case == '2':
+            e_cha = np.array(case2['Charge Power [kW]'])
+            e_dis = np.array(case2['Discharge Power [kW]'])
+            e_EV_cha = np.array(case2['EV Charge Power [kW]'])
+            e_EV_dis = np.array(case2['EV Discharge Power [kW]'])
 
-    if main_case == '3':
-        e_cha = np.array(case3['Charge Power [kW]'])
-        e_dis = np.array(case3['Discharge Power [kW]'])
-        e_EV_cha = np.array(case3['EV Charge Power [kW]'])
-        e_EV_dis = np.array(case3['EV Discharge Power [kW]'])
+        if main_case == '3':
+            e_cha = np.array(case3['Charge Power [kW]'])
+            e_dis = np.array(case3['Discharge Power [kW]'])
+            e_EV_cha = np.array(case3['EV Charge Power [kW]'])
+            e_EV_dis = np.array(case3['EV Discharge Power [kW]'])
 
+        adjusted_demand = np.array([(d - e) for d, e in zip(demand, e_dis)]) 
+        adjusted_EV_demand = np.array([(d - e) for d, e in zip(EV_demand, e_EV_dis)]) 
 
-    adjusted_demand = np.array([(d - e) for d, e in zip(demand, e_dis)]) #each element is the result of subtracting e_dis from demand.
-    adjusted_EV_demand = np.array([(d - e) for d, e in zip(EV_demand, e_EV_dis)]) #each element is the result of subtracting e_EV_dis from demand.
+        plt.rc('xtick', labelsize=14)  
+        plt.rc('ytick', labelsize=14)  
+        plt.rc('font', family='serif') 
 
-    plt.rc('xtick', labelsize=14)  # X-tick customization
-    plt.rc('ytick', labelsize=14)  # Y-tick customization
-    plt.rc('font', family='serif') # Change font family globally
+        days = [i for i in range(1,32)]
+        days_str = []
+        for day in days:
+            if day < 10:
+                days_str.append('0' + str(day) + '.01')
+            else:
+                days_str.append(str(day) + '.01')
 
-    days = [i for i in range(1,32)]
-    days_str = []
-    for day in days:
-        if day < 10:
-            days_str.append('0' + str(day) + '.01')
-        else:
-            days_str.append(str(day) + '.01')
-
-    fig, ax1 = plt.subplots(figsize = (12,6))
-    if main_case == 'b':
-        ax1.step(hours, y_base, where = 'post', label='Grid Import', color='magenta', linewidth = 2)
-    if main_case == '1':
-        ax1.step(hours, y_base, where = 'post', label='Grid Import Base Case', color='magenta', alpha = 0.8, linewidth = 2, linestyle = '--')
-        ax1.step(hours, y_case1, where = 'post', label='Grid Import Case 1', color='magenta', linewidth = 2)
-    if main_case == '2':
-        ax1.step(hours, y_case1, where = 'post', label='Grid Import Case 1', color='magenta', alpha = 0.8, linewidth = 2, linestyle = '--')
-        ax1.step(hours, y_case2, where = 'post', label='Grid Import Case 2', color='magenta', linewidth = 2)
-    if main_case == '3':
-        ax1.step(hours, y_case2, where = 'post', label='Grid Import Case 2', color='magenta', alpha = 0.8, linewidth = 2, linestyle = '--')
-        ax1.step(hours, y_case3, where = 'post', label='Grid Import Case 3', color='magenta', linewidth = 2)       
-    ax1.bar(hours, adjusted_demand, align='edge', label='Household Demand', color='lightgrey')
-    ax1.bar(hours, adjusted_EV_demand, align='edge', bottom = adjusted_demand, label='Regular EV Charging', color='tab:grey')
-    if main_case != 'b':
-        ax1.bar(hours, e_cha, align ='edge', bottom = adjusted_demand + adjusted_EV_demand, label = 'BESS Charging', color = 'limegreen')
-        ax1.bar(hours, e_EV_cha, align= 'edge', bottom = adjusted_demand + adjusted_EV_demand + e_cha, label = 'Additional EV Charging', color = 'darkgreen')
-        ax1.bar(hours, e_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand , label = 'BESS Discharging', color = 'orangered')
-        ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand+ e_dis, label = 'Avoided EV Charging', color = 'darkred')
-    major_ticks = [i for i in range(0,744,24)]
-    major_labels =[f'{day}' for day in days_str]
-    minor_ticks = [i for i in range(0, 744, 6)]
-    ax1.set_xticks(major_ticks)
-    ax1.set_xticklabels(major_labels, fontsize = 14, fontweight = 'bold')
-    ax1.set_xticks(minor_ticks, minor = True)
-    ax1.tick_params(axis = 'x', which = 'minor', length=5, color='gray')
-    ax1.xaxis.set_tick_params(which='minor', labelsize=14)
-    ax1.set_ylabel('Power [kW]',fontsize=16, fontweight='bold')
-    ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-    ax1.set_xlim(24*27, 24*29)
-    ax1.set_ylim(0,110)
-    ax2 = ax1.twinx() 
-    ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
-    ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=16, fontweight='bold')
-    ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-    ax2.set_ylim([0, 0.3])
-    plt.title('Grid Import and Allocation', fontsize=18, fontweight='bold')
-    fig.tight_layout()
-    plt.show()
+        fig, ax1 = plt.subplots(figsize = (12,6))
+        if main_case == 'b':
+            ax1.step(hours, y_base, where = 'post', label='Grid Import', color='magenta', linewidth = 2)
+        if main_case == '1':
+            ax1.step(hours, y_base, where = 'post', label='Grid Import Base Case', color='magenta', alpha = 0.8, linewidth = 2, linestyle = '--')
+            ax1.step(hours, y_case1, where = 'post', label='Grid Import Case 1', color='magenta', linewidth = 2)
+        if main_case == '2':
+            ax1.step(hours, y_case1, where = 'post', label='Grid Import Case 1', color='magenta', alpha = 0.8, linewidth = 2, linestyle = '--')
+            ax1.step(hours, y_case2, where = 'post', label='Grid Import Case 2', color='magenta', linewidth = 2)
+        if main_case == '3':
+            ax1.step(hours, y_case2, where = 'post', label='Grid Import Case 2', color='magenta', alpha = 0.8, linewidth = 2, linestyle = '--')
+            ax1.step(hours, y_case3, where = 'post', label='Grid Import Case 3', color='magenta', linewidth = 2)       
+        ax1.bar(hours, adjusted_demand, align='edge', label='Household Demand', color='lightgrey')
+        ax1.bar(hours, adjusted_EV_demand, align='edge', bottom = adjusted_demand, label='Regular EV Charging', color='tab:grey')
+        if main_case != 'b':
+            ax1.bar(hours, e_cha, align ='edge', bottom = adjusted_demand + adjusted_EV_demand, label = 'BESS Charging', color = 'limegreen')
+            ax1.bar(hours, e_EV_cha, align= 'edge', bottom = adjusted_demand + adjusted_EV_demand + e_cha, label = 'Additional EV Charging', color = 'darkgreen')
+            ax1.bar(hours, e_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand , label = 'BESS Discharging', color = 'orangered')
+            ax1.bar(hours, e_EV_dis, align ='edge', bottom = adjusted_demand + adjusted_EV_demand+ e_dis, label = 'Avoided EV Charging', color = 'darkred')
+        major_ticks = [i for i in range(0,744,24)]
+        major_labels =[f'{day}' for day in days_str]
+        minor_ticks = [i for i in range(0, 744, 6)]
+        ax1.set_xticks(major_ticks)
+        ax1.set_xticklabels(major_labels, fontsize = 16, fontweight = 'bold')
+        ax1.set_xticks(minor_ticks, minor = True)
+        ax1.tick_params(axis = 'x', which = 'minor', length=5, color='gray')
+        ax1.xaxis.set_tick_params(which='minor', labelsize=14)
+        ax1.set_ylabel('Power [kW]',fontsize=18, fontweight='bold')
+        ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':14})
+        ax1.set_xlim(24*27, 24*29)
+        ax1.set_ylim(0,110)
+        ax2 = ax1.twinx() 
+        ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
+        ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=18, fontweight='bold')
+        ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif', 'size':12})
+        ax2.set_ylim([0, 1])
+        plt.title('Grid Import and Allocation', fontsize=20, fontweight='bold')
+        fig.tight_layout()
+        plt.show()
 
 def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, compare_3_case_file):
 
@@ -561,15 +563,62 @@ def Economic_plots(base_case_file, compare_case_file, compare_2_case_file, compa
 def Analysis(file):
 
     data = pd.read_excel(file)
+    grid_import = list(data['Power Import [kW]'])
 
-    grid_import = data['Power Import [kW]']
+    night_hours =  [hour for hour in range(744) if hour % 24 < 6 or hour % 24 >= 22]
 
     counter = 0
-    for el in grid_import:
-        if el >= 75:
+    night_counter = 0
+    value = []
+    hour = []
+    for i in range(len(grid_import)):
+        if grid_import[i] >= 75:
             counter += 1
+            value.append(grid_import[i])
+            hour.append(i)
+            if i in night_hours:
+                night_counter += 1
     
+    print('-------------------------------------------------------------------')
     print('Numer of hours with grid import above 75 kW are: ', counter)
+    print(f'{night_counter/counter *100:.2f}% occurred during the night')
+    #print('These values were: ', value)
+    #print('And they occured in these hours: ', hour)
+ 
+def Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const):
+
+    case_dict = {'flexible_EV_on': True,      #flexible EV charge not active
+                'battery_on': True,           #community BESS not active
+                'power_grid_tariff_on': True,  #grid tariff not active
+                'step_grid_tariff': True,      #stepwise grid tariff active
+                'IBDR_on': True,              #incentive base demand response not active
+                'hour_restricted': 0,
+                'power_restricted': 0}
+
+    hour_restricted = [i for i in range(744)]
+    demand = []
+    for val in Demand.values():
+        demand.append(val)
+    demand_array = np.array(demand)
+    EV_demand_array = np.array(EV_data['Charging'].values)
+
+    power_restricted = []
+    for i in range(len(demand_array)):
+        power_restricted.append(demand_array[i] - 16 - EV_demand_array[i])
+    power_restricted[0] = demand_array[0]
+
+    total_costs = []
+
+    for h in hour_restricted:
+        case_dict['hour_restricted'] = h
+        case_dict['power_restricred'] = power_restricted[h]
+        m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
+        Solve(m)
+        total_costs.append(pyo.value(m.Obj))
+
+    plt.plot(range(744), total_costs)
+    plt.show()
+
 
 
 
@@ -577,11 +626,11 @@ if __name__ == '__main__':
 
     #Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
     
-    #Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx', '3')
+    Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
 
     #Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
 
-    Analysis('Base_Case_Results.xlsx')
-    Analysis('Case1_Results.xlsx')
-    Analysis('Case2_Results.xlsx')
-    Analysis('Case3_Results.xlsx')
+    # Analysis('Base_Case_Results.xlsx')
+    # Analysis('Case1_Results.xlsx')
+    # Analysis('Case2_Results.xlsx')
+    # Analysis('Case3_Results.xlsx')
