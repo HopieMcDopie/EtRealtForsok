@@ -245,14 +245,15 @@ def Graphical_Results_2(basecase_file, case1_file, case2_file, case3_file):
         ax1.tick_params(axis = 'x', which = 'minor', length=5, color='gray')
         ax1.xaxis.set_tick_params(which='minor', labelsize=14)
         ax1.set_ylabel('Power [kW]',fontsize=18, fontweight='bold')
-        ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':14})
+        ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
         ax1.set_xlim(24*27, 24*29)
-        ax1.set_ylim(0,110)
+        #ax1.set_xlim(0, 48)
+        ax1.set_ylim(0,115)
         ax2 = ax1.twinx() 
         ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
         ax2.set_ylabel('Spot Price [NOK/kWh]', fontsize=18, fontweight='bold')
         ax2.legend(loc='upper right', prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-        ax2.set_ylim([0, 1])
+        ax2.set_ylim([0, 1.4])
         plt.title('Grid Import and Allocation', fontsize=20, fontweight='bold')
         fig.tight_layout()
         plt.show()
@@ -477,9 +478,9 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
     plt.step(y_lim, obj_val_diff, linewidth = 2)
     plt.xlabel('Grid Import Allowed [kW]', fontsize = 14, fontweight='bold')
     plt.xticks([i for i in range(10,75,5)])
-    plt.xlim(9.9,70.1)
+    plt.xlim(9.9,72.9)
     plt.ylabel('Change in Total Costs [NOK]', fontsize = 16, fontweight='bold')
-    plt.ylim(0,0.35)
+    plt.ylim(0,0.4)
     plt.title('Marginal Cost of Flexibility', fontsize = 18, fontweight='bold')
     plt.tight_layout()
     plt.grid()
@@ -561,29 +562,43 @@ def Economic_plots(base_case_file, compare_case_file, compare_2_case_file, compa
     plt.show()
 
 def Analysis(file):
-
     data = pd.read_excel(file)
     grid_import = list(data['Power Import [kW]'])
 
     night_hours =  [hour for hour in range(744) if hour % 24 < 6 or hour % 24 >= 22]
 
-    counter = 0
-    night_counter = 0
-    value = []
-    hour = []
+    upper_bracket_counter = 0
+    lower_bracket_counter = 0
+    upper_night_counter = 0
+    lower_night_counter = 0
     for i in range(len(grid_import)):
-        if grid_import[i] >= 75:
-            counter += 1
-            value.append(grid_import[i])
-            hour.append(i)
+        if grid_import[i] > 75 and grid_import[i] <= 100:
+            upper_bracket_counter += 1
             if i in night_hours:
-                night_counter += 1
+                upper_night_counter +=1
+
+        if grid_import[i] > 50 and grid_import[i] <= 75:
+            lower_bracket_counter += 1
+            if i in night_hours:
+                lower_night_counter +=1
+                
+    upper_fraction = 0
+    if upper_bracket_counter != 0:
+        upper_fraction = upper_night_counter/upper_bracket_counter
     
+    lower_fraction = 0
+    if lower_bracket_counter != 0:
+        lower_fraction = lower_night_counter/lower_bracket_counter
+
+
     print('-------------------------------------------------------------------')
-    print('Numer of hours with grid import above 75 kW are: ', counter)
-    print(f'{night_counter/counter *100:.2f}% occurred during the night')
-    #print('These values were: ', value)
-    #print('And they occured in these hours: ', hour)
+    print('Numer of hours with grid import in the 75-100 kW bracket are: ', upper_bracket_counter)
+    print(f'{upper_fraction*100:.2f}% of these occurred during the night')
+    print('\n')
+    print('Numer of hours with grid import in the 50-75 kW bracket are: ', lower_bracket_counter)
+    print(f'{lower_fraction *100:.2f}% of these occurred during the night')
+
+
  
 def Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const):
 
@@ -600,11 +615,9 @@ def Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex
     for val in Demand.values():
         demand.append(val)
     demand_array = np.array(demand)
-    EV_demand_array = np.array(EV_data['Charging'].values)
-
     power_restricted = []
     for i in range(len(demand_array)):
-        power_restricted.append(demand_array[i] - 16 - EV_demand_array[i])
+        power_restricted.append(demand_array[i] - 16)
     power_restricted[0] = demand_array[0]
 
     total_costs = []
@@ -626,11 +639,11 @@ if __name__ == '__main__':
 
     #Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
     
-    Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    #Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
 
     #Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
 
-    # Analysis('Base_Case_Results.xlsx')
-    # Analysis('Case1_Results.xlsx')
-    # Analysis('Case2_Results.xlsx')
-    # Analysis('Case3_Results.xlsx')
+    Analysis('Base_Case_Results.xlsx')
+    Analysis('Case1_Results.xlsx')
+    Analysis('Case2_Results.xlsx')
+    Analysis('Case3_Results.xlsx')

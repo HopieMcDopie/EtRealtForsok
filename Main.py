@@ -14,7 +14,7 @@ ________________________________________________
 """
 if __name__ == "__main__":
 
-    normal_run = True #Set to false if you want to print marginal cost of flexibility curve
+    normal_run = False #Set to false if you want to print marginal cost of flexibility curve
 
 
 
