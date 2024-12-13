@@ -565,38 +565,70 @@ def Analysis(file):
     data = pd.read_excel(file)
     grid_import = list(data['Power Import [kW]'])
 
-    night_hours =  [hour for hour in range(744) if hour % 24 < 6 or hour % 24 >= 22]
+    night_hours = [hour for hour in range(744) if hour % 24 < 6 or hour % 24 >= 22]
+    morning_hours = [hour for hour in range(744) if 6 <= hour % 24 < 10]
+    midday_hours = [hour for hour in range(744) if 10 <= hour % 24 < 16]
+    evening_hours = [hour for hour in range(744) if 16 <= hour % 24 < 22]
 
     upper_bracket_counter = 0
-    lower_bracket_counter = 0
+    upper_hours = []
     upper_night_counter = 0
+    upper_morning_counter = 0
+    upper_midday_counter = 0
+    upper_evening_counter =  0
+
     lower_night_counter = 0
+    lower_bracket_counter = 0
+    lower_hours = []
+    lower_night_counter = 0
+    lower_morning_counter = 0
+    lower_midday_counter = 0
+    lower_evening_counter = 0
+
     for i in range(len(grid_import)):
         if grid_import[i] > 75 and grid_import[i] <= 100:
             upper_bracket_counter += 1
+            upper_hours.append(i)
             if i in night_hours:
                 upper_night_counter +=1
+            elif i in morning_hours:
+                upper_morning_counter +=1
+            elif i in midday_hours:
+                upper_midday_counter += 1
+            elif i in evening_hours:
+                upper_evening_counter += 1
 
         if grid_import[i] > 50 and grid_import[i] <= 75:
             lower_bracket_counter += 1
+            lower_hours.append(i)
             if i in night_hours:
-                lower_night_counter +=1
-                
-    upper_fraction = 0
-    if upper_bracket_counter != 0:
-        upper_fraction = upper_night_counter/upper_bracket_counter
-    
-    lower_fraction = 0
-    if lower_bracket_counter != 0:
-        lower_fraction = lower_night_counter/lower_bracket_counter
+                lower_night_counter += 1
+            elif i in morning_hours:
+                lower_morning_counter += 1
+            elif i in midday_hours:
+                lower_midday_counter += 1
+            elif i in evening_hours:
+                lower_evening_counter += 1
 
 
     print('-------------------------------------------------------------------')
     print('Numer of hours with grid import in the 75-100 kW bracket are: ', upper_bracket_counter)
-    print(f'{upper_fraction*100:.2f}% of these occurred during the night')
+    print(f'{upper_morning_counter} of these occurred during the morning')
+    print(f'{upper_midday_counter} of these occurred during the midday')
+    print(f'{upper_evening_counter} of these occurred during the evening')
+    print(f'{upper_night_counter} of these occurred during the night')
+    print('The hours were: ', upper_hours)
     print('\n')
     print('Numer of hours with grid import in the 50-75 kW bracket are: ', lower_bracket_counter)
-    print(f'{lower_fraction *100:.2f}% of these occurred during the night')
+    print(f'{lower_morning_counter} of these occurred during the morning')
+    print(f'{lower_midday_counter} of these occurred during the midday')
+    print(f'{lower_evening_counter} of these occurred during the evening')
+    print(f'{lower_night_counter} of these occurred during the night')
+    print('The hours were: ', lower_hours)
+    print('-------------------------------------------------------------------')   
+
+
+
 
 
  
@@ -610,7 +642,8 @@ def Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex
                 'hour_restricted': 0,
                 'power_restricted': 0}
 
-    hour_restricted = [i for i in range(744)]
+    #hour_restricted = [i for i in range(744)]
+    hour_restricted = [674]
     demand = []
     for val in Demand.values():
         demand.append(val)
@@ -620,17 +653,20 @@ def Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex
         power_restricted.append(demand_array[i] - 16)
     power_restricted[0] = demand_array[0]
 
+    print(power_restricted[674])
     total_costs = []
 
-    for h in hour_restricted:
-        case_dict['hour_restricted'] = h
-        case_dict['power_restricred'] = power_restricted[h]
-        m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
-        Solve(m)
-        total_costs.append(pyo.value(m.Obj))
+    # for h in hour_restricted:
+    #     case_dict['hour_restricted'] = h
+    #     case_dict['power_restricred'] = power_restricted[h]
+    #     m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
+    #     Solve(m)
+    #     total_costs.append(pyo.value(m.Obj))
 
-    plt.plot(range(744), total_costs)
-    plt.show()
+    # print(total_costs)
+
+    #plt.plot(range(744), total_costs)
+    #plt.show()
 
 
 
