@@ -638,12 +638,11 @@ def Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex
                 'battery_on': True,           #community BESS not active
                 'power_grid_tariff_on': True,  #grid tariff not active
                 'step_grid_tariff': True,      #stepwise grid tariff active
-                'IBDR_on': True,              #incentive base demand response not active
+                'IBDR_on': True,            #incentive base demand response not active
                 'hour_restricted': 0,
                 'power_restricted': 0}
 
-    #hour_restricted = [i for i in range(744)]
-    hour_restricted = [674]
+    hour_restricted = [i for i in range(744)]
     demand = []
     for val in Demand.values():
         demand.append(val)
@@ -656,17 +655,16 @@ def Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex
     print(power_restricted[674])
     total_costs = []
 
-    # for h in hour_restricted:
-    #     case_dict['hour_restricted'] = h
-    #     case_dict['power_restricred'] = power_restricted[h]
-    #     m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
-    #     Solve(m)
-    #     total_costs.append(pyo.value(m.Obj))
+    for h in hour_restricted:
+        case_dict['hour_restricted'] = h
+        case_dict['power_restricted'] = power_restricted[h]
+        m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
+        Solve(m)
+        total_costs.append(pyo.value(m.Obj))
 
-    # print(total_costs)
 
-    #plt.plot(range(744), total_costs)
-    #plt.show()
+    plt.plot(range(744), total_costs)
+    plt.show()
 
 
 
