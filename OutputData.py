@@ -218,6 +218,7 @@ def Graphical_Results_2(basecase_file, case1_file, case2_file, case3_file):
                 days_str.append(str(day) + '.01')
 
         fig, ax1 = plt.subplots(figsize = (12,6))
+        ax1.axhline(y = 75, color = 'k', linestyle = '-.')
         if main_case == 'b':
             ax1.step(hours, y_base, where = 'post', label='Grid Import', color='magenta', linewidth = 2)
         if main_case == '1':
@@ -243,11 +244,14 @@ def Graphical_Results_2(basecase_file, case1_file, case2_file, case3_file):
         ax1.set_xticklabels(major_labels, fontsize = 16, fontweight = 'bold')
         ax1.set_xticks(minor_ticks, minor = True)
         ax1.tick_params(axis = 'x', which = 'minor', length=5, color='gray')
+        current_ticks = list(ax1.get_yticks())
+        new_ticks = current_ticks + [75]
+        ax1.set_yticks(sorted(new_ticks))
         ax1.xaxis.set_tick_params(which='minor', labelsize=14)
         ax1.set_ylabel('Power [kW]',fontsize=18, fontweight='bold')
         ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-        ax1.set_xlim(24*27, 24*29)
-        #ax1.set_xlim(0, 48)
+        #ax1.set_xlim(24*27, 24*29)
+        ax1.set_xlim(0, 48)
         ax1.set_ylim(0,115)
         ax2 = ax1.twinx() 
         ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
@@ -673,11 +677,11 @@ if __name__ == '__main__':
 
     #Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
     
-    #Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
 
     #Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
 
-    Analysis('Base_Case_Results.xlsx')
-    Analysis('Case1_Results.xlsx')
-    Analysis('Case2_Results.xlsx')
-    Analysis('Case3_Results.xlsx')
+    # Analysis('Base_Case_Results.xlsx')
+    # Analysis('Case1_Results.xlsx')
+    # Analysis('Case2_Results.xlsx')
+    # Analysis('Case3_Results.xlsx')
