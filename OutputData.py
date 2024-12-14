@@ -627,11 +627,6 @@ def Analysis(file):
     print('The hours were: ', lower_hours)
     print('-------------------------------------------------------------------')   
 
-
-
-
-
- 
 def Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const):
 
     case_dict = {'flexible_EV_on': True,      #flexible EV charge not active
@@ -643,24 +638,29 @@ def Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex
                 'power_restricted': 0}
 
     hour_restricted = [i for i in range(744)]
+
     demand = []
     for val in Demand.values():
         demand.append(val)
     demand_array = np.array(demand)
+
     power_restricted = []
     for i in range(len(demand_array)):
         power_restricted.append(demand_array[i] - 16)
     power_restricted[0] = demand_array[0]
 
-    print(power_restricted[674])
     total_costs = []
-
     for h in hour_restricted:
         case_dict['hour_restricted'] = h
         case_dict['power_restricted'] = power_restricted[h]
         m = ModelSetUp(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const, case_dict)
         Solve(m)
         total_costs.append(pyo.value(m.Obj))
+
+    # results_df = pd.DataFrame({ 'Hour': hour_restricted,
+    #                             'Power Restricted [kW]': power_restricted,
+    #                              'Total Cost [NOK]': total_costs})
+    # results_df.to_excel('Test.xlsx', index = None)
 
 
     plt.plot(range(744), total_costs)
