@@ -305,7 +305,7 @@ if __name__ == '__main__':
     plt.fill_between(hours, top_extended, bottom_extended, step = 'post', alpha = 0.2, color = 'tab:red')
     plt.xticks(hours)
     plt.xlabel('Hours', fontsize=16, fontweight='bold')
-    plt.ylabel('Power [kW]', fontsize=16, fontweight='bold')
+    plt.ylabel('Power [kWh/h]', fontsize=16, fontweight='bold')
     plt.title('Average hourly aggregated household demand with standard deviation', fontsize=18, fontweight='bold')
     plt.xlim(0,24)
     plt.tight_layout()

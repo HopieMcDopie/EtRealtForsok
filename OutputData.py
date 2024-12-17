@@ -248,10 +248,10 @@ def Graphical_Results_2(basecase_file, case1_file, case2_file, case3_file):
         new_ticks = current_ticks + [75]
         ax1.set_yticks(sorted(new_ticks))
         ax1.xaxis.set_tick_params(which='minor', labelsize=14)
-        ax1.set_ylabel('Power [kW]',fontsize=18, fontweight='bold')
+        ax1.set_ylabel('Power [kWh/h]',fontsize=18, fontweight='bold')
         ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
-        #ax1.set_xlim(24*27, 24*29)
-        ax1.set_xlim(0, 48)
+        ax1.set_xlim(24*27, 24*29)
+        #ax1.set_xlim(0, 48)
         ax1.set_ylim(0,115)
         ax2 = ax1.twinx() 
         ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
@@ -322,11 +322,11 @@ def Comparing_plots(base_case_file, compare_case_file, compare_2_case_file, comp
     ax1.step(hours, case_hourly_mean,  color = 'tab:green', label = 'Case 1', linewidth = 2, where = 'post')
     ax1.step(hours, case_2_hourly_mean,  color = 'tab:orange', label = 'Case 2', linewidth = 2, where = 'post')
     ax1.step(hours, case_3_hourly_mean,  color = 'tab:purple', label = 'Case 3', linewidth = 2, where = 'post')
-    #ax1.set_xlim(0,23)
+    ax1.set_xlim(0,23)
     ax1.set_xticks(hours)
     ax1.set_xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
     #ax1.set_ylim(40,85)
-    ax1.set_ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
+    ax1.set_ylabel('Power [kWh/h]', fontsize=16, fontweight='bold', family='serif')
     ax1.legend(loc = 'upper left', ncol = 2, prop = {'weight': 'bold', 'family': 'serif', 'size': 14})
     ax2 = ax1.twinx()
     ax2.set_ylabel('Price [NOK/kWh)]', fontsize=16, fontweight='bold', family='serif')
@@ -393,7 +393,7 @@ def Box_Plots(m):
     for patch in box1['boxes']:
         patch.set_facecolor('bisque')
     plt.xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
-    plt.ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
+    plt.ylabel('Power [kWh/h]', fontsize=16, fontweight='bold', family='serif')
     plt.ylim(0, 100)
     plt.title('Grid Import', fontsize=18, fontweight='bold', family='serif')
     plt.tight_layout()
@@ -406,7 +406,7 @@ def Box_Plots(m):
     for patch in box2['boxes']:
         patch.set_facecolor('lightsteelblue')
     plt.xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
-    plt.ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
+    plt.ylabel('Power [kWh/h]', fontsize=16, fontweight='bold', family='serif')
     plt.ylim(0, 35)
     plt.title('EV Charging', fontsize=18, fontweight='bold', family='serif')
     plt.tight_layout()
@@ -425,7 +425,7 @@ def Box_Plots(m):
         median.set_color('darkred')
         median.set_linewidth(2)
     plt.xlabel('Hours', fontsize=16, fontweight='bold', family='serif')
-    plt.ylabel('Power [kW]', fontsize=16, fontweight='bold', family='serif')
+    plt.ylabel('Power [kWh/h]', fontsize=16, fontweight='bold', family='serif')
     plt.ylim(0, 35)
     plt.title('BESS Charging/Discharging', fontsize=18, fontweight='bold', family='serif')
     plt.plot([], [], color='darkgreen', label='Charge')
@@ -480,7 +480,7 @@ def Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_con
     plt.figure(figsize = (12,6))
     plt.axvline(x = 10.2, linestyle = '--', color = 'k')
     plt.step(y_lim, obj_val_diff, linewidth = 2)
-    plt.xlabel('Grid Import Allowed [kW]', fontsize = 14, fontweight='bold')
+    plt.xlabel('Grid Import Allowed [kWh/h]', fontsize = 14, fontweight='bold')
     plt.xticks([i for i in range(10,75,5)])
     plt.xlim(9.9,72.9)
     plt.ylabel('Change in Total Costs [NOK]', fontsize = 16, fontweight='bold')
@@ -675,9 +675,9 @@ def Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex
 
 if __name__ == '__main__':
 
-    #Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    Comparing_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
     
-    Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
+    #Graphical_Results_2('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
 
     #Economic_plots('Base_Case_Results.xlsx', 'Case1_Results.xlsx', 'Case2_Results.xlsx', 'Case3_Results.xlsx')
 

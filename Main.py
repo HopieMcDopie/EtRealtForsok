@@ -57,8 +57,8 @@ if __name__ == "__main__":
 
         ###Support functions to store and present data
         #Store_Results_In_File(m, what2run) #Storing output values in an excel sheet
-        Graphical_Results(m, what2run) #Printing graphical results of values from optimisation values
-        #Box_Plots(m)
+        #Graphical_Results(m, what2run) #Printing graphical results of values from optimisation values
+        Box_Plots(m)
 
         ###Prints
         print(f'Objective function: {pyo.value(m.Obj):.2f} NOK')
@@ -70,7 +70,7 @@ if __name__ == "__main__":
             print(f'!! There is {max(ENS):.5f} kWh energy not supplied in the model!!')
     
     else:
-        #Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
-        Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
+        Cost_Of_Flex(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
+        #Test(SpotPrice, EnergyTariff, PowerTariff, Demand, EV_data, batt_const, flex_const)
 
 
