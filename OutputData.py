@@ -252,6 +252,7 @@ def Graphical_Results_2(basecase_file, case1_file, case2_file, case3_file):
         ax1.legend(loc='upper left', ncol = 3, prop = {'weight': 'bold', 'family': 'serif', 'size':12})
         ax1.set_xlim(24*27, 24*29)
         #ax1.set_xlim(0, 48)
+        #ax1.set_xlim(0,744)
         ax1.set_ylim(0,115)
         ax2 = ax1.twinx() 
         ax2.step(hours, price, where = 'post', label='Spot Price', color='tab:blue', linewidth = 2, linestyle = '--')
